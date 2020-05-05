@@ -1,4 +1,4 @@
-// This is the code for bomber control, written by Yuxuan Huang
+// This is the code for bomber control, written by Yuxuan Huang and Jiajun Tang
 // for the final project of CSCI 5611
 
 import java.lang.Math;
@@ -16,6 +16,7 @@ void setup() {
   bomberimg = loadImage("Bomber.png");
   gun = loadImage("gun.png");
   init();
+  
 }
 
 void init() {
