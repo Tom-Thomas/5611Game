@@ -71,6 +71,7 @@ void update(float dt){
     B.pos.add(PVector.mult(v, dt));
     if (B.up) B.angle -= (B.sens*PI/180.0);
     else if (B.down) B.angle += (B.sens*PI/180.0);
+    B.pos.y += (5-B.health)*3/5.0;
     // Collision Check
     if (B.pos.y >= 900) B.health = 0;
   }
