@@ -81,6 +81,7 @@ void update(float dt){
     
   // Collision Check
   if (B.pos.y >= 900) init(); // Plane Crash & restart
+  if (B.pos.x <= -150 || B.pos.x >= 1750 || B.pos.y <= -150) B.angle += PI;
   
   // Bomb Update
   if (B.cooldown) { // bomb dropped
