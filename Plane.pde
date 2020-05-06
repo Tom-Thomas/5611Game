@@ -4,7 +4,7 @@
 import java.lang.Math;
 
 String projectTitle = "Bomber";
-PImage sky, bomberimg, gun, tank;
+PImage sky, bomberimg, gun, tank, truck;
 Bomber B;
 Bomb b;
 Fort fort;
@@ -17,6 +17,7 @@ void setup() {
   bomberimg = loadImage("AVG.png");
   gun = loadImage("gun.png");
   tank = loadImage("tank.png");
+  truck = loadImage("truck.png");
   background(sky);
   init();
 }
@@ -59,6 +60,62 @@ class Bomb{
     pos = new PVector(B.pos.x, B.pos.y);
     vel = B.vel.copy();
     pos.add(vel);
+  }
+}
+
+// class particle system
+class ptc_sys{
+  ArrayList<PVector> POS; // position
+  ArrayList<PVector> VEL; // velocity
+  ArrayList<PVector> COL; // color
+  ArrayList<Float> LIFE; // remaining life
+  float gen_rate;
+  float lifespan;
+  PVector srs_pos;
+  
+  ptc_sys(float gr, float ls, PVector pos, PVector dim, PVector vel){
+    gen_rate = gr;
+    lifespan = ls;
+    POS = new ArrayList<PVector>();
+    VEL = new ArrayList<PVector>();
+    COL = new ArrayList<PVector>();
+    LIFE = new ArrayList<Float>();
+  }
+  
+  PVector GenPos(PVector pos, PVector dim){ // generate initial positionposition
+    float x, y;
+    x = pos.x + 2*dim.x*((float)Math.random()-0.5);
+    y = pos.y + 2*dim.y*((float)Math.random()-0.5);
+    PVector ini_pos = new PVector(x, y);
+    return ini_pos;
+  }
+  
+  PVector GenVel(PVector ref_vel){ // generate initial velocity
+    PVector ini_vel = ref_vel.copy();
+    ini_vel.x += ((float)Math.random() - 0.5);
+    ini_vel.y += ((float)Math.random() - 0.5);
+    return ini_vel;
+  }
+  
+  float GenLife(float std) { // generate initial lifespan
+    float life = std + (float)Math.random() * 0.5;
+    return life;
+  }
+  
+  void DelParticles() { // delete particles
+    ArrayList<Integer> DelList = new ArrayList<Integer>();
+    for (int i = 0; i < LIFE.size(); i++) {
+      if (LIFE.get(i) < 0) {
+        DelList.add(i);
+      }
+    }
+    for (int i = DelList.size() - 1; i >= 0; i--) {
+      int tmp = DelList.get(i);
+      POS.remove(tmp);
+      VEL.remove(tmp);
+      COL.remove(tmp);
+      LIFE.remove(tmp);
+    }
   }
 }
 
@@ -168,9 +225,16 @@ void drawScene(){
   
   // tank
   imageMode(CENTER);
+  pushMatrix();
   translate(1000, 870);
   scale(0.3);
   image(tank,0,0);
+  popMatrix();
+  pushMatrix();
+  translate(1300, 870);
+  scale(0.55);
+  image(truck,0,0);
+  popMatrix();
   
 }
 
