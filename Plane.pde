@@ -4,7 +4,7 @@
 import java.lang.Math;
 
 String projectTitle = "Bomber";
-PImage bomberimg,gun;
+PImage sky, bomberimg, gun, tank;
 Bomber B;
 Bomb b;
 Fort fort;
@@ -13,16 +13,18 @@ Float bullet_v=50.0; //bullet velocity
 void setup() {
   size(1600, 900, P2D);
   noStroke();
-  bomberimg = loadImage("Bomber.png");
+  sky = loadImage("Sky.jpg");
+  bomberimg = loadImage("AVG.png");
   gun = loadImage("gun.png");
+  tank = loadImage("tank.png");
+  background(sky);
   init();
-  
 }
 
 void init() {
   B = new Bomber();
   b = new Bomb(B);
-  fort = new Fort(new PVector(800,920));
+  fort = new Fort(new PVector(780,920));
 }
 
 class Bomber{
@@ -72,7 +74,7 @@ void update(float dt){
     B.vel.mult(B.vel_mtp);
   }
   else{
-    B.vel.y += (acceleration * dt);
+    B.vel.y += (acceleration / 2.0 * dt);
   }
   B.pos.add(PVector.mult(B.vel, dt));
   if (B.up) B.angle -= (B.sens*PI/180.0);
@@ -80,7 +82,7 @@ void update(float dt){
   B.pos.y += (5-B.health)*3/5.0;
     
   // Collision Check
-  if (B.pos.y >= 900) init(); // Plane Crash & restart
+  if (B.pos.y >= 880) init(); // Plane Crash & restart
   if (B.pos.x <= -150 || B.pos.x >= 1750 || B.pos.y <= -150) B.angle += PI;
   
   // Bomb Update
@@ -88,7 +90,7 @@ void update(float dt){
     b.pos.add(PVector.mult(b.vel, dt));
     b.vel.y += (acceleration * dt);
     // Collision Check
-    if (b.pos.y >= 900) B.cooldown = false;
+    if (b.pos.y >= 880) B.cooldown = false;
   }
   
   //Fort update
@@ -125,14 +127,17 @@ void update(float dt){
 
 
 void drawScene(){
-  background(255,255,255);
-  //bomber and bomb
+  
+  // sky
+  background(sky);
+  
+  // bomber and bomb
   fill(255, 0, 0);
   pushMatrix();
   translate(B.pos.x, B.pos.y);
   rotate(B.angle*PI/180.0);
-  //triangle(-15, 0, -15, 10, 15, 10); // temp triangle representation of bomber
-  scale(0.1);
+  scale(0.15);
+  imageMode(CENTER);
   image(bomberimg, 0, 0);
   popMatrix();
   if (B.cooldown) {
@@ -141,15 +146,14 @@ void drawScene(){
   }
   
   
-   //fort and bullet
-   
-   
-   
+   // fort and bullet
+
    pushMatrix();
    translate(fort.pos.x,fort.pos.y);
    rotate((fort.angle-90)*PI/180.0);
    scale(0.5);
    
+   imageMode(CORNER);
    image(gun, 50, -40);
    popMatrix();
    
@@ -161,6 +165,12 @@ void drawScene(){
      fill(0, 0, 0);
      circle(bullet.pos.x, bullet.pos.y, 5);
    }
+  
+  // tank
+  imageMode(CENTER);
+  translate(1000, 870);
+  scale(0.3);
+  image(tank,0,0);
   
 }
 
