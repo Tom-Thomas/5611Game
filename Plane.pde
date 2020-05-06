@@ -9,6 +9,7 @@ Bomber B;
 Bomb b;
 Fort fort;
 Float bullet_v=50.0; //bullet velocity
+int bomber_direction=1; //1:fly to right, -1:fly to lest
 
 void setup() {
   size(1600, 900, P2D);
@@ -50,6 +51,21 @@ class Bomber{
     down = false;
     sens = 80;
     cooldown = false;
+  }
+  
+  //to make use the wings donot upside down
+  public void angle_check(){
+    if(angle<-180){
+      angle+=360;
+    }
+    if(angle>180){
+      angle-=360;
+    }
+    if(angle<-90||angle>90){
+      bomber_direction=-1;
+    }else{
+      bomber_direction=1;
+    }
   }
 }
 
@@ -134,13 +150,22 @@ void update(float dt){
     B.vel.y += (acceleration / 2.0 * dt);
   }
   B.pos.add(PVector.mult(B.vel, dt));
-  if (B.up) B.angle -= (B.sens*PI/180.0);
-  else if (B.down) B.angle += (B.sens*PI/180.0);
+  if (B.up&&abs(B.angle+90)>40) {
+    B.angle -= bomber_direction*(B.sens*PI/180.0);
+    B.angle_check();
+  }else if (B.down&&abs(B.angle-90)>20) {
+    B.angle += bomber_direction*(B.sens*PI/180.0);
+    B.angle_check();
+  }
+  
   B.pos.y += (5-B.health)*3/5.0;
     
   // Collision Check
   if (B.pos.y >= 880) init(); // Plane Crash & restart
-  if (B.pos.x <= -150 || B.pos.x >= 1750 || B.pos.y <= -150) B.angle += PI;
+  if (B.pos.x <= -150 || B.pos.x >= 1750 || B.pos.y <= -150) {//turn back
+    B.angle += 180;
+    B.angle_check();
+  }
   
   // Bomb Update
   if (B.cooldown) { // bomb dropped
@@ -193,7 +218,7 @@ void drawScene(){
   pushMatrix();
   translate(B.pos.x, B.pos.y);
   rotate(B.angle*PI/180.0);
-  scale(0.15);
+  scale(0.15,0.15*bomber_direction);
   imageMode(CENTER);
   image(bomberimg, 0, 0);
   popMatrix();
