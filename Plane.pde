@@ -27,7 +27,8 @@ void init() {
 
 class Bomber{
   int health;
-  float vel; // velocity
+  float vel_mtp; // velocity multiplier
+  PVector vel;
   float angle; // angle of elevation
   PVector pos = new PVector(); // position
   float sens; // sensitivity
@@ -37,8 +38,9 @@ class Bomber{
   
   public Bomber(){
     health = 5;
-    vel = 30;
+    vel_mtp = 30;
     angle = 0;
+    vel = new PVector(cos(angle*PI/180.0), sin(angle*PI/180.0)).mult(vel_mtp);
     pos.x = 0;
     pos.y = 450;
     up = false;
@@ -53,7 +55,7 @@ class Bomb{
   PVector vel = new PVector();
   Bomb(Bomber B){
     pos = new PVector(B.pos.x, B.pos.y);
-    vel = new PVector(cos(B.angle*PI/180.0), sin(B.angle*PI/180.0)).mult(B.vel);
+    vel = B.vel.copy();
     pos.add(vel);
   }
 }
@@ -65,17 +67,20 @@ void update(float dt){
   
   
   // Bomber Flight Update
-  if (B.health > 0){ // if bomber not destroyed
-    PVector v = new PVector(cos(B.angle*PI/180.0), sin(B.angle*PI/180.0));
-    v.mult(B.vel);
-    B.pos.add(PVector.mult(v, dt));
-    if (B.up) B.angle -= (B.sens*PI/180.0);
-    else if (B.down) B.angle += (B.sens*PI/180.0);
-    B.pos.y += (5-B.health)*3/5.0;
-    // Collision Check
-    if (B.pos.y >= 900) B.health = 0;
+  if (B.health != 0){ // Plane not destroyed
+    B.vel.set(cos(B.angle*PI/180.0), sin(B.angle*PI/180.0));
+    B.vel.mult(B.vel_mtp);
   }
-  else init(); // Restart
+  else{
+    B.vel.y += (acceleration * dt);
+  }
+  B.pos.add(PVector.mult(B.vel, dt));
+  if (B.up) B.angle -= (B.sens*PI/180.0);
+  else if (B.down) B.angle += (B.sens*PI/180.0);
+  B.pos.y += (5-B.health)*3/5.0;
+    
+  // Collision Check
+  if (B.pos.y >= 900) init(); // Plane Crash & restart
   
   // Bomb Update
   if (B.cooldown) { // bomb dropped
@@ -174,8 +179,10 @@ void draw() {
 void keyPressed()
 {
   // Bomber
-  if (keyCode == 'W') B.up = true; //<>//
-  else if (keyCode == 'S') B.down = true;
+  if (B.health > 0){
+    if (keyCode == 'W') B.up = true;
+    else if (keyCode == 'S') B.down = true;
+  } //<>//
   // Bomb
   if (keyCode ==   ' ' && B.cooldown == false){ // drop bomb
     B.cooldown = true;
