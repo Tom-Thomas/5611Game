@@ -163,12 +163,12 @@ void update(float dt){
   if (B.pos.y >= 880) init(); // Plane Crash & restart
   
   //out of boder and turn back
-  if (B.pos.x < 0 || B.pos.x > 1600) {
+  if (B.pos.x < -30 || B.pos.x > 1630) {
     B.angle = (180-B.angle);
     B.angle_check();
     bomber_direction*=-1;  
   }
-  if(B.pos.y<0){
+  if(B.pos.y<-30){
     B.angle=-B.angle;
     B.angle_check();
   }
