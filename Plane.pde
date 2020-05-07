@@ -9,8 +9,10 @@ Bomber B;
 Bomb b;
 Fort fort;
 Float bullet_v=50.0; //bullet velocity
-int bomber_direction=1; //1:fly to right, -1:fly to lest
+Float bomb_r=10.0;//bomb_radius
+int bomber_direction=1; //1:fly to right, -1:fly to left
 ArrayList <Car>cars;
+Boolean cheat=false;
 
 void setup() {
   size(1600, 900, P2D);
@@ -33,12 +35,12 @@ void init() {
   cars=new ArrayList<Car>();
   
   //adding cars, caution: add from the car ont the lest to the car on the right
-  cars.add(new Car(1,1000,870,-5));
-  cars.add(new Car(1,1100,870,-5));
-  cars.add(new Car(2,1200,870,-5));
-  cars.add(new Car(2,1300,870,-5));
-  cars.add(new Car(2,1400,870,-5));
-  cars.add(new Car(1,1500,870,-5));
+  cars.add(new Car(1,900,870,-5));
+  cars.add(new Car(1,1040,870,-5));
+  cars.add(new Car(2,1230,870,-5));
+  cars.add(new Car(2,1370,870,-5));
+  cars.add(new Car(2,1510,870,-5));
+  cars.add(new Car(1,1670,870,-5));
 }
 
 class Bomber{
@@ -228,21 +230,48 @@ void update(float dt){
   }
   
   
-  
+
   //Cars update
   for(int i=0;i<cars.size();i++){
     Car car=cars.get(i);
     
-    if(dis(b.pos,car.pos)<30){
+    if(cheat||B.cooldown&&dis(b.pos,car.pos)<50){//hit check
+      if(cheat){
+        cheat=false;
+      }
       car.alive=false;
-      println("car is hitted");
-      break;
+
+      println("car is hitted");//hit
+      car.t_up=true;
+      car.t_vel.set(b.vel.x*0.3,b.vel.y*-1*0.2);
+      car.t_pos.set(car.pos.x,car.pos.y-7.0);
+      
     }
     
-    if(!car.alive){
-      break;
+    if(car.alive){
+      float safe_distance=105;
+      if(car.type==2)safe_distance+=12;
+      if(cars.get(i-1).type==2)safe_distance+=12;
+      if(i==0||i>=1&&car.pos.x-cars.get(i-1).pos.x>safe_distance){
+        
+      car.pos.set(car.pos.x+car.speed*dt,car.pos.y);
+      }
+
     }
-    car.pos.set(car.pos.x+car.speed*dt,car.pos.y);
+    
+  }
+  
+  //turrent update
+  for(Car car:cars){
+    if(!car.t_up){continue;}
+    car.t_vel.y+=5*dt;
+    car.t_pos.x+=car.t_vel.x;
+    car.t_pos.y+=car.t_vel.y;
+    if(car.t_pos.y>870){
+      car.t_up=false;
+      car.t_pos.y=870;
+    }
+    
   }
   
 }
@@ -267,7 +296,7 @@ void drawScene(){
   //bomb
   if (B.cooldown) {
     fill(0, 0, 0);
-    circle(b.pos.x, b.pos.y, 5);
+    circle(b.pos.x, b.pos.y, bomb_r);
   }
   
   
@@ -286,29 +315,27 @@ void drawScene(){
    for(int i=fort.bullet_list.size()-1;i>=0;i--){
      Bullet bullet=fort.bullet_list.get(i);
      fill(0, 0, 0);
-     circle(bullet.pos.x, bullet.pos.y, 5);
+     circle(bullet.pos.x, bullet.pos.y, bomb_r);
    }
   
   // cars
   for(Car car:cars){
     
     imageMode(CENTER);
-    pushMatrix();
-    translate(car.pos.x, car.pos.y);
-    
+     
     if(car.type==1){
-      scale(0.3);
+      
       if(car.alive){
-        image(tank,0,0);
+        image(tank,car.pos.x, car.pos.y,250.0*0.4,88.0*0.4);
       }else{
-        image(tanktbody,0,0);
-        image(tankturrent,0,-100);
+        image(tanktbody,car.pos.x, car.pos.y+8.0,250.0*0.4,56.0*0.4);
+        image(tankturrent,car.t_pos.x, car.t_pos.y,250.0*0.4,33.0*0.4);
       }
     }else if(car.type==2){
-      scale(0.55);
-      image(truck,0,0);
+      
+      image(truck,car.pos.x, car.pos.y,150.0*0.83,59.0*0.83);
     }
-    popMatrix();
+
   
   }
   
@@ -341,6 +368,10 @@ void keyPressed()
   }
   
   if (keyCode == ESC  ) exit();
+  
+  if (keyCode == 'C'  ) cheat=true;
+  
+  if (keyCode == 'R'  ) init();
   
   if (keyCode == RIGHT  ) fort.right=true;
   
@@ -407,15 +438,23 @@ class Bullet{
 }
 
 class Car{
-  PVector pos;
+  PVector pos;//position
+  PVector t_pos;//turrent position
+  float t_angle;//turrent angle
+  PVector t_vel;//turrent velocity
+  boolean t_up;//whether turrent is floating
   float speed;
   int type;//1 tank, 2 truck
   boolean alive;
+
   public Car(int type,float posx,float posy,float speed){
     this.type=type;
     pos=new PVector(posx,posy);
     this.speed=speed;
     alive=true;
+    t_pos=new PVector(posx,posy);
+    t_angle=0.0;
+    t_vel=new PVector(0,0);
   }
   
   
@@ -424,4 +463,9 @@ class Car{
 //distance
 float dis(PVector p1, PVector p2){
   return sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
+}
+
+//length
+float len(PVector p1){
+  return sqrt(p1.x*p1.x+p1.y*p1.y);
 }
