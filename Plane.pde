@@ -249,9 +249,9 @@ void update(float dt){
     }
     
     if(car.alive){
-      float safe_distance=105;
+      float safe_distance=108;
       if(car.type==2)safe_distance+=12;
-      if(cars.get(i-1).type==2)safe_distance+=12;
+      if(i>=1&&cars.get(i-1).type==2)safe_distance+=12;
       if(i==0||i>=1&&car.pos.x-cars.get(i-1).pos.x>safe_distance){
         
       car.pos.set(car.pos.x+car.speed*dt,car.pos.y);
