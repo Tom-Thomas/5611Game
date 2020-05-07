@@ -9,8 +9,12 @@ Bomber B;
 Bomb b;
 Fort fort;
 Float bullet_v=50.0; //bullet velocity
+<<<<<<< HEAD
 Float bomb_r=10.0;//bomb_radius
 int bomber_direction=1; //1:fly to right, -1:fly to left
+=======
+int bomber_direction; //1:fly to right, -1:fly to lest
+>>>>>>> 50fe83d394c756fefb08e268fbf7b4d74401aa4e
 ArrayList <Car>cars;
 Boolean cheat=false;
 
@@ -35,12 +39,22 @@ void init() {
   cars=new ArrayList<Car>();
   
   //adding cars, caution: add from the car ont the lest to the car on the right
+<<<<<<< HEAD
   cars.add(new Car(1,900,870,-5));
   cars.add(new Car(1,1040,870,-5));
   cars.add(new Car(2,1230,870,-5));
   cars.add(new Car(2,1370,870,-5));
   cars.add(new Car(2,1510,870,-5));
   cars.add(new Car(1,1670,870,-5));
+=======
+  cars.add(new Car(1,1000,870,-5));
+  cars.add(new Car(1,1100,870,-5));
+  cars.add(new Car(2,1200,870,-5));
+  cars.add(new Car(2,1300,870,-5));
+  cars.add(new Car(2,1400,870,-5));
+  cars.add(new Car(1,1500,870,-5));
+  bomber_direction = 1;
+>>>>>>> 50fe83d394c756fefb08e268fbf7b4d74401aa4e
 }
 
 class Bomber{
