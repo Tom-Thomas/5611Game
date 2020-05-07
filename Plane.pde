@@ -171,11 +171,9 @@ void update(float dt){
   
   B.pos.y += (5-B.health)*3/5.0;
     
-  // Collision Check
-  if (B.pos.y >= 880) init(); // Plane Crash & restart
-  
-  //out of boder and turn back
-  if (B.pos.x < -30 || B.pos.x > 1630) {
+  if (B.pos.y >= 880) init();   // Collision Check, Plane Crash & restart
+
+  if (B.pos.x < -30 || B.pos.x > 1630) {//out of boder and turn back
     B.angle = (180-B.angle);
     B.angle_check();
     bomber_direction*=-1;  
@@ -185,13 +183,17 @@ void update(float dt){
     B.angle_check();
   }
   
+  
+  
   // Bomb Update
   if (B.cooldown) { // bomb dropped
     b.pos.add(PVector.mult(b.vel, dt));
     b.vel.y += (acceleration * dt);
-    // Collision Check
-    if (b.pos.y >= 880) B.cooldown = false;
+
+    if (b.pos.y >= 880) B.cooldown = false;// Collision Check
   }
+  
+  
   
   //Fort update
   if(fort.right){
@@ -205,6 +207,9 @@ void update(float dt){
     fort.cooldown=0;
   }
   
+  
+  
+  
   //Fort bullet update
   for(int i=fort.bullet_list.size()-1;i>=0;i--){
      Bullet bullet=fort.bullet_list.get(i);
@@ -214,16 +219,17 @@ void update(float dt){
        fort.bullet_list.remove(i);
        continue;
      }
-     //hit Check
-      if(dis(bullet.pos,B.pos)<30.0){
+     
+      if(dis(bullet.pos,B.pos)<30.0){//hit Check
         B.health--;
         fort.bullet_list.remove(i);
         continue;
       }
   }
   
-  //Cars
   
+  
+  //Cars update
   for(int i=0;i<cars.size();i++){
     Car car=cars.get(i);
     
@@ -232,12 +238,11 @@ void update(float dt){
       println("car is hitted");
       break;
     }
+    
     if(!car.alive){
       break;
     }
-    
     car.pos.set(car.pos.x+car.speed*dt,car.pos.y);
-    
   }
   
 }
@@ -249,7 +254,7 @@ void drawScene(){
   // sky
   background(sky);
   
-  // bomber and bomb
+  // bomber
   fill(255, 0, 0);
   pushMatrix();
   translate(B.pos.x, B.pos.y);
@@ -258,33 +263,33 @@ void drawScene(){
   imageMode(CENTER);
   image(bomberimg, 0, 0);
   popMatrix();
+  
+  //bomb
   if (B.cooldown) {
     fill(0, 0, 0);
     circle(b.pos.x, b.pos.y, 5);
   }
   
   
-   // fort and bullet
-
+   // fort
    pushMatrix();
    translate(fort.pos.x,fort.pos.y);
    rotate((fort.angle-90)*PI/180.0);
    scale(0.5);
-   
    imageMode(CORNER);
    image(gun, 50, -40);
    popMatrix();
-   
    fill(0, 0, 100);
    circle(fort.pos.x,fort.pos.y,120);
    
+   //bullet
    for(int i=fort.bullet_list.size()-1;i>=0;i--){
      Bullet bullet=fort.bullet_list.get(i);
      fill(0, 0, 0);
      circle(bullet.pos.x, bullet.pos.y, 5);
    }
   
-  // tank and truck
+  // cars
   for(Car car:cars){
     
     imageMode(CENTER);
