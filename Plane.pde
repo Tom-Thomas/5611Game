@@ -246,7 +246,7 @@ void update(float dt){
       car.t_up=true;
       car.t_vel.set(b.vel.x*0.15,b.vel.y*-1*0.1);
       car.t_pos.set(car.pos.x,car.pos.y-10.0);
-      
+      car.t_ang_ver=7.0;
     }
     
     if(car.alive){
@@ -261,19 +261,33 @@ void update(float dt){
     }
     
     //turrent update
-    if(car.t_up){
+    if(car.t_up){ 
       car.t_vel.y+=4*dt;
       car.t_pos.x+=car.t_vel.x;
       car.t_pos.y+=car.t_vel.y;
       if(car.t_vel.x>0){
-        car.t_angle+=7;
+        car.t_angle+=car.t_ang_ver;
       }else{
-        car.t_angle-=7;
+        car.t_angle-=car.t_ang_ver;
       }
+      
+      //rigid
+      PVector p1=new PVector(car.t_pos.x-50*cos(car.t_angle*PI/180), car.t_pos.y-50*sin(car.t_angle*PI/180));//left end of the rod
+      PVector p2=new PVector(car.t_pos.x+36*cos(car.t_angle*PI/180), car.t_pos.y+36*sin(car.t_angle*PI/180));//right end of the rod
+      
       if(car.t_pos.y>870){
         car.t_up=false;
         car.t_pos.y=870;
+      }else if(p1.y>870&&p2.y<870){
+        car.t_center=-1;
+        car.t_vel.set(0,0);
+        
+      }else if(p2.y>870&&p1.y<870){
+        car.t_center=1;
+        car.t_vel.set(0,0);
       }
+      
+      
     }
     
   }
@@ -343,6 +357,10 @@ void drawScene(){
         imageMode(CENTER);
         image(tankturrent,0, 0,250.0*0.4,33.0*0.4);
         popMatrix();
+        fill(255, 0, 0);
+        circle(car.t_pos.x-50*cos(car.t_angle*PI/180), car.t_pos.y-50*sin(car.t_angle*PI/180),5);
+        fill(0, 255, 255);
+        circle(car.t_pos.x+36*cos(car.t_angle*PI/180), car.t_pos.y+36*sin(car.t_angle*PI/180),5); //<>//
         
         
       }
@@ -360,7 +378,7 @@ void drawScene(){
 void draw() {
   //Compute the physics update
   update(0.15); 
-  //Draw the scene //<>//
+  //Draw the scene
   drawScene();
   
   surface.setTitle(projectTitle);
@@ -458,6 +476,8 @@ class Car{
   float t_angle;//turrent angle
   PVector t_vel;//turrent velocity
   boolean t_up;//whether turrent is floating
+  float t_ang_ver;//turrent angle velocity
+  int t_center;//rotate center -1~+1
   float speed;
   int type;//1 tank, 2 truck
   boolean alive;
@@ -469,6 +489,8 @@ class Car{
     alive=true;
     t_pos=new PVector(posx,posy);
     t_angle=0.0;
+    t_ang_ver=0.0;
+    t_center=0;
     t_vel=new PVector(0,0);
   }
   
