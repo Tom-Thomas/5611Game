@@ -242,10 +242,10 @@ void update(float dt){
       }
       car.alive=false;
 
-      println("car is hitted");//hit
+      println("car is hitted");//hit turrent
       car.t_up=true;
-      car.t_vel.set(b.vel.x*0.3,b.vel.y*-1*0.2);
-      car.t_pos.set(car.pos.x,car.pos.y-7.0);
+      car.t_vel.set(b.vel.x*0.15,b.vel.y*-1*0.1);
+      car.t_pos.set(car.pos.x,car.pos.y-10.0);
       
     }
     
@@ -260,20 +260,26 @@ void update(float dt){
 
     }
     
-  }
-  
-  //turrent update
-  for(Car car:cars){
-    if(!car.t_up){continue;}
-    car.t_vel.y+=5*dt;
-    car.t_pos.x+=car.t_vel.x;
-    car.t_pos.y+=car.t_vel.y;
-    if(car.t_pos.y>870){
-      car.t_up=false;
-      car.t_pos.y=870;
+    //turrent update
+    if(car.t_up){
+      car.t_vel.y+=4*dt;
+      car.t_pos.x+=car.t_vel.x;
+      car.t_pos.y+=car.t_vel.y;
+      if(car.t_vel.x>0){
+        car.t_angle+=7;
+      }else{
+        car.t_angle-=7;
+      }
+      if(car.t_pos.y>870){
+        car.t_up=false;
+        car.t_pos.y=870;
+      }
     }
     
   }
+  
+  
+
   
 }
 
@@ -330,7 +336,15 @@ void drawScene(){
         image(tank,car.pos.x, car.pos.y,250.0*0.4,88.0*0.4);
       }else{
         image(tanktbody,car.pos.x, car.pos.y+8.0,250.0*0.4,56.0*0.4);
-        image(tankturrent,car.t_pos.x, car.t_pos.y,250.0*0.4,33.0*0.4);
+        
+        pushMatrix();
+        translate(car.t_pos.x, car.t_pos.y);
+        rotate((car.t_angle)*PI/180.0);
+        imageMode(CENTER);
+        image(tankturrent,0, 0,250.0*0.4,33.0*0.4);
+        popMatrix();
+        
+        
       }
     }else if(car.type==2){
       
@@ -346,7 +360,7 @@ void drawScene(){
 void draw() {
   //Compute the physics update
   update(0.15); 
-  //Draw the scene
+  //Draw the scene //<>//
   drawScene();
   
   surface.setTitle(projectTitle);
@@ -360,7 +374,7 @@ void keyPressed()
   // Bomber
   if (B.health > 0){
     if (keyCode == 'W') B.up = true;
-    else if (keyCode == 'S') B.down = true; //<>//
+    else if (keyCode == 'S') B.down = true;
   } //<>//
   // Bomb
   if (keyCode ==   ' ' && B.cooldown == false){ // drop bomb
