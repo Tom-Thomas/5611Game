@@ -9,7 +9,7 @@ Bomber B;
 Bomb b;
 Fort fort;
 Float bullet_v=50.0; //bullet velocity
-int bomber_direction=1; //1:fly to right, -1:fly to lest
+int bomber_direction; //1:fly to right, -1:fly to lest
 ArrayList <Car>cars;
 
 void setup() {
@@ -39,6 +39,7 @@ void init() {
   cars.add(new Car(2,1300,870,-5));
   cars.add(new Car(2,1400,870,-5));
   cars.add(new Car(1,1500,870,-5));
+  bomber_direction = 1;
 }
 
 class Bomber{
