@@ -1,4 +1,5 @@
-// This is the code for bomber control, written by Yuxuan Huang and Jiajun Tang
+// This is the code for a multiplayer war game
+// written by Yuxuan Huang and Jiajun Tang
 // for the final project of CSCI 5611
 
 import java.lang.Math;
@@ -31,6 +32,7 @@ void setup() {
 void init() {
   B = new Bomber();
   b = new Bomb(B);
+  pln_smk = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30); 
   fort = new Fort(new PVector(780,920));
   cars=new ArrayList<Car>();
   
@@ -85,27 +87,79 @@ class Bomb{
   Bomb(Bomber B){
     pos = new PVector(B.pos.x, B.pos.y);
     vel = B.vel.copy();
-    pos.add(vel);
+    //pos.add(vel);
   }
 }
 
-// class particle system
+// ================= class particle system ==========================
 class ptc_sys{
-  ArrayList<PVector> POS; // position
+  public ArrayList<PVector> POS; // position
   ArrayList<PVector> VEL; // velocity
   ArrayList<PVector> COL; // color
   ArrayList<Float> LIFE; // remaining life
   float gen_rate;
   float lifespan;
-  PVector srs_pos;
+  PVector src_pos; // source initial position
+  PVector src_dim; // source dimension
+  PVector ini_vel; // initial velocity
+  float ptb_angle; // ini_vel perturbation angle
   
-  ptc_sys(float gr, float ls, PVector pos, PVector dim, PVector vel){
-    gen_rate = gr;
+  ptc_sys(float gr, float ls, PVector pos, PVector dim, PVector vel, float ptb){
+    gen_rate = gr; //<>//
     lifespan = ls;
+    src_pos = pos.copy();
+    src_dim = dim.copy();
+    ini_vel = vel.copy();
+    ptb_angle = ptb;
+    
     POS = new ArrayList<PVector>();
     VEL = new ArrayList<PVector>();
     COL = new ArrayList<PVector>();
     LIFE = new ArrayList<Float>();
+  }
+  
+  public void Update(float dt){ // update particle system
+    src_pos = B.pos;
+    ini_vel = PVector.mult(B.vel, -0.5);
+    spawnParticles(dt); // spawn new particles in this timestep
+    DelParticles();
+    for (int i = 0; i < POS.size(); i++) {
+      // Update positions
+      POS.get(i).x += VEL.get(i).x * dt;
+      POS.get(i).y += VEL.get(i).y * dt;
+      // Update velocity
+      VEL.get(i).y -= 0.6;
+      //COL.get(i).y = ((1 - LIFE.get(i) / lifespan) * 255);
+      //println(LIFE.get(i));
+      LIFE.set(i, LIFE.get(i) - dt);
+    }
+  }
+  
+  // Generate particles for a timestep
+  void spawnParticles(float dt) {
+    // calculate the num of particles to gen in a timestep
+    float numParticles = dt * gen_rate;
+    float fracPart = numParticles - int(numParticles);
+    numParticles = int(numParticles);
+    if (Math.random() < fracPart) {
+      numParticles += 1;
+    }
+    for (int i = 0; i < numParticles; i++){
+      //generate particles
+      ParticleGen();
+    }
+  }
+  
+  // Generate a single particle
+  void ParticleGen() {
+    PVector p = GenPos(src_pos, src_dim);
+    PVector v = GenVel(ini_vel, ptb_angle);
+    PVector c = new PVector(255, 255, 255);
+    float life = GenLife(lifespan);
+    POS.add(p);
+    VEL.add(v);
+    COL.add(c);
+    LIFE.add(life);
   }
   
   PVector GenPos(PVector pos, PVector dim){ // generate initial positionposition
@@ -116,10 +170,12 @@ class ptc_sys{
     return ini_pos;
   }
   
-  PVector GenVel(PVector ref_vel){ // generate initial velocity
+  PVector GenVel(PVector ref_vel, float ptb){ // generate initial velocity
     PVector ini_vel = ref_vel.copy();
-    ini_vel.x += ((float)Math.random() - 0.5);
-    ini_vel.y += ((float)Math.random() - 0.5);
+    float rand1 = (float)Math.random() + 0.5;
+    float rand2 = ((float)Math.random() - 0.5) * 2 * ptb;
+    ini_vel.mult(rand1);
+    ini_vel.rotate(rand2 * PI / 180);
     return ini_vel;
   }
   
@@ -143,13 +199,19 @@ class ptc_sys{
       LIFE.remove(tmp);
     }
   }
+  
+  void SetGenRate(float x){
+    gen_rate = x;
+  }
 }
 
+// ==============================================================================
+
+ptc_sys pln_smk;// plane smoke
 
 //Animation Principle: Separate Physical Update 
 void update(float dt){
   float acceleration = 10;
-  
   
   // Bomber Flight Update
   if (B.health != 0){ // Plane not destroyed
@@ -176,7 +238,7 @@ void update(float dt){
     
   if (B.pos.y >= 880) init();   // Collision Check, Plane Crash & restart
 
-  if (B.pos.x < -30 || B.pos.x > 1630) {//out of boder and turn back
+  if (B.pos.x < -30 || B.pos.x > 1630) {//out of border and turn back
     B.angle = (180-B.angle);
     B.angle_check();
     bomber_direction*=-1;  
@@ -194,6 +256,13 @@ void update(float dt){
     b.vel.y += (acceleration * dt);
 
     if (b.pos.y >= 880) B.cooldown = false;// Collision Check
+  }
+  
+  
+  // Plane Smoke Update
+  if (B.health < 5){ // Plane emit smoke
+    pln_smk.SetGenRate(20*(5-B.health));
+    pln_smk.Update(dt);
   }
   
   
@@ -304,6 +373,14 @@ void drawScene(){
   if (B.cooldown) {
     fill(0, 0, 0);
     circle(b.pos.x, b.pos.y, bomb_r);
+  }
+  
+  
+  // plane smoke
+  for (int i = 0; i < pln_smk.POS.size(); i++) {
+    strokeWeight(5 - pln_smk.LIFE.get(i));
+    stroke(0,0,0,(pln_smk.LIFE.get(i))*50);
+    point(pln_smk.POS.get(i).x, pln_smk.POS.get(i).y);
   }
   
   
