@@ -5,7 +5,7 @@
 import java.lang.Math;
 
 String projectTitle = "Bomber";
-PImage sky, bomberimg, gun, tank, truck,tanktbody,tankturrent;
+PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent;
 Bomber B;
 Bomb b;
 Fort fort;
@@ -20,7 +20,8 @@ void setup() {
   noStroke();
   sky = loadImage("Sky.jpg");
   bomberimg = loadImage("AVG.png");
-  gun = loadImage("gun.png");
+  gun = loadImage("gunbarrel.png");
+  gunbase = loadImage("gunbase.png");
   tank = loadImage("tank.png");
   truck = loadImage("truck.png");
   tanktbody=loadImage("tanktbody.png");
@@ -33,7 +34,7 @@ void init() {
   B = new Bomber();
   b = new Bomb(B);
   pln_smk = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30); 
-  fort = new Fort(new PVector(780,920));
+  fort = new Fort(new PVector(800,880));
   cars=new ArrayList<Car>();
   
   //adding cars, caution: add from the car ont the lest to the car on the right
@@ -268,10 +269,10 @@ void update(float dt){
   
   
   //Fort update
-  if(fort.right){
+  if(fort.right && fort.angle < 90){
     fort.angle+=fort.sens*PI/180;
   }
-  if(fort.left){
+  if(fort.left && fort.angle > -90){
     fort.angle-=fort.sens*PI/180;
   }
   fort.cooldown-=dt;
@@ -382,18 +383,6 @@ void drawScene(){
     stroke(0,0,0,(pln_smk.LIFE.get(i))*50);
     point(pln_smk.POS.get(i).x, pln_smk.POS.get(i).y);
   }
-  
-  
-   // fort
-   pushMatrix();
-   translate(fort.pos.x,fort.pos.y);
-   rotate((fort.angle-90)*PI/180.0);
-   scale(0.5);
-   imageMode(CORNER);
-   image(gun, 50, -40);
-   popMatrix();
-   fill(0, 0, 100);
-   circle(fort.pos.x,fort.pos.y,120);
    
    //bullet
    for(int i=fort.bullet_list.size()-1;i>=0;i--){
@@ -427,9 +416,22 @@ void drawScene(){
       
       image(truck,car.pos.x, car.pos.y,150.0*0.83,59.0*0.83);
     }
-
-  
   }
+
+   // fort
+   pushMatrix();
+   translate(fort.pos.x,fort.pos.y -20);
+   rotate((fort.angle-90)*PI/180.0);
+   scale(0.6);
+   image(gun, 0, 0);
+   popMatrix();
+   fill(0, 0, 100);
+   imageMode(CENTER);
+   pushMatrix();
+   translate(fort.pos.x, fort.pos.y);
+   scale(0.4);
+   image(gunbase, 0, 0);
+   popMatrix();
   
 }
 
@@ -469,7 +471,7 @@ void keyPressed()
   
   if (keyCode == LEFT  ) fort.left=true;
   
-  if(keyCode == ENTER&&fort.cooldown<=0){
+  if(keyCode == ENTER && fort.cooldown<=0){
     
     fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
     fort.cooldown+=30;
@@ -523,8 +525,8 @@ class Bullet{
      pos.x=x;
      pos.y=y;
      angle=angle1;
-     pos.x+=170*sin(angle*PI/180.0);
-     pos.y-=170*cos(angle*PI/180.0);
+     pos.x += 80*sin(angle*PI/180.0);
+     pos.y -= (80*cos(angle*PI/180.0)+20);
    }
    
 }
