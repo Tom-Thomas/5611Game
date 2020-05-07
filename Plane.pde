@@ -4,12 +4,13 @@
 import java.lang.Math;
 
 String projectTitle = "Bomber";
-PImage sky, bomberimg, gun, tank, truck;
+PImage sky, bomberimg, gun, tank, truck,tanktbody,tankturrent;
 Bomber B;
 Bomb b;
 Fort fort;
 Float bullet_v=50.0; //bullet velocity
 int bomber_direction=1; //1:fly to right, -1:fly to lest
+ArrayList <Car>cars;
 
 void setup() {
   size(1600, 900, P2D);
@@ -19,6 +20,8 @@ void setup() {
   gun = loadImage("gun.png");
   tank = loadImage("tank.png");
   truck = loadImage("truck.png");
+  tanktbody=loadImage("tanktbody.png");
+  tankturrent=loadImage("tankturrent.png");
   background(sky);
   init();
 }
@@ -27,6 +30,15 @@ void init() {
   B = new Bomber();
   b = new Bomb(B);
   fort = new Fort(new PVector(780,920));
+  cars=new ArrayList<Car>();
+  
+  //adding cars, caution: add from the car ont the lest to the car on the right
+  cars.add(new Car(1,1000,870,-5));
+  cars.add(new Car(1,1100,870,-5));
+  cars.add(new Car(2,1200,870,-5));
+  cars.add(new Car(2,1300,870,-5));
+  cars.add(new Car(2,1400,870,-5));
+  cars.add(new Car(1,1500,870,-5));
 }
 
 class Bomber{
@@ -210,6 +222,24 @@ void update(float dt){
       }
   }
   
+  //Cars
+  
+  for(int i=0;i<cars.size();i++){
+    Car car=cars.get(i);
+    
+    if(dis(b.pos,car.pos)<30){
+      car.alive=false;
+      println("car is hitted");
+      break;
+    }
+    if(!car.alive){
+      break;
+    }
+    
+    car.pos.set(car.pos.x+car.speed*dt,car.pos.y);
+    
+  }
+  
 }
 
 
@@ -254,18 +284,28 @@ void drawScene(){
      circle(bullet.pos.x, bullet.pos.y, 5);
    }
   
-  // tank
-  imageMode(CENTER);
-  pushMatrix();
-  translate(1000, 870);
-  scale(0.3);
-  image(tank,0,0);
-  popMatrix();
-  pushMatrix();
-  translate(1300, 870);
-  scale(0.55);
-  image(truck,0,0);
-  popMatrix();
+  // tank and truck
+  for(Car car:cars){
+    
+    imageMode(CENTER);
+    pushMatrix();
+    translate(car.pos.x, car.pos.y);
+    
+    if(car.type==1){
+      scale(0.3);
+      if(car.alive){
+        image(tank,0,0);
+      }else{
+        image(tanktbody,0,0);
+        image(tankturrent,0,-100);
+      }
+    }else if(car.type==2){
+      scale(0.55);
+      image(truck,0,0);
+    }
+    popMatrix();
+  
+  }
   
 }
 
@@ -359,6 +399,21 @@ class Bullet{
      pos.y-=170*cos(angle*PI/180.0);
    }
    
+}
+
+class Car{
+  PVector pos;
+  float speed;
+  int type;//1 tank, 2 truck
+  boolean alive;
+  public Car(int type,float posx,float posy,float speed){
+    this.type=type;
+    pos=new PVector(posx,posy);
+    this.speed=speed;
+    alive=true;
+  }
+  
+  
 }
 
 //distance
