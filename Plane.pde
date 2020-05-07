@@ -49,22 +49,17 @@ class Bomber{
     pos.y = 450;
     up = false;
     down = false;
-    sens = 80;
+    sens = 2.5;
     cooldown = false;
   }
   
-  //to make use the wings donot upside down
+  //make sure angle -180~+180
   public void angle_check(){
     if(angle<-180){
       angle+=360;
     }
     if(angle>180){
       angle-=360;
-    }
-    if(angle<-90||angle>90){
-      bomber_direction=-1;
-    }else{
-      bomber_direction=1;
     }
   }
 }
@@ -150,20 +145,31 @@ void update(float dt){
     B.vel.y += (acceleration / 2.0 * dt);
   }
   B.pos.add(PVector.mult(B.vel, dt));
-  if (B.up&&abs(B.angle+90)>40) {
-    B.angle -= bomber_direction*(B.sens*PI/180.0);
+  if (B.up) {
+   
+    B.angle -= bomber_direction*B.sens;
     B.angle_check();
-  }else if (B.down&&abs(B.angle-90)>20) {
-    B.angle += bomber_direction*(B.sens*PI/180.0);
+    
+  }else if (B.down) {
+    
+    B.angle += bomber_direction*B.sens;
     B.angle_check();
+    
   }
   
   B.pos.y += (5-B.health)*3/5.0;
     
   // Collision Check
   if (B.pos.y >= 880) init(); // Plane Crash & restart
-  if (B.pos.x <= -150 || B.pos.x >= 1750 || B.pos.y <= -150) {//turn back
-    B.angle += 180;
+  
+  //out of boder and turn back
+  if (B.pos.x < 0 || B.pos.x > 1600) {
+    B.angle = (180-B.angle);
+    B.angle_check();
+    bomber_direction*=-1;  
+  }
+  if(B.pos.y<0){
+    B.angle=-B.angle;
     B.angle_check();
   }
   
