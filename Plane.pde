@@ -9,7 +9,7 @@ PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent;
 Bomber B;
 Bomb b;
 Fort fort;
-Float bullet_v=50.0; //bullet velocity
+Float bullet_v=100.0; //bullet velocity
 Float bomb_r=10.0;//bomb_radius
 int bomber_direction; //1:fly to right, -1:fly to left
 ArrayList <Car>cars;
@@ -34,6 +34,7 @@ void init() {
   B = new Bomber();
   b = new Bomb(B);
   pln_flm = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30);
+  spark = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   car_flm = new ArrayList<ptc_sys>();
   car_smk = new ArrayList<ptc_sys>();
   fort = new Fort(new PVector(800,880));
@@ -108,7 +109,7 @@ class ptc_sys{
   float ptb_angle; // ini_vel perturbation angle
   
   ptc_sys(float gr, float ls, PVector pos, PVector dim, PVector vel, float ptb){
-    gen_rate = gr; //<>//
+    gen_rate = gr;
     lifespan = ls;
     src_pos = pos.copy();
     src_dim = dim.copy();
@@ -133,6 +134,8 @@ class ptc_sys{
       POS.get(i).x += VEL.get(i).x * dt;
       POS.get(i).y += VEL.get(i).y * dt;
       // Update velocity
+      //if (expl) VEL.get(i).y += 10;
+      //else 
       if (!smk) VEL.get(i).y -= 0.6;
       LIFE.set(i, LIFE.get(i) - dt);
     }
@@ -210,12 +213,13 @@ class ptc_sys{
 
 // ==============================================================================
 
-ptc_sys pln_flm;// plane smoke
+ptc_sys pln_flm; // plane smoke
+ptc_sys spark; // spark when the plane is hit
 ArrayList<ptc_sys> car_flm; // car flame
 ArrayList<ptc_sys> car_smk; // car smoke
 
 
-//Animation Principle: Separate Physical Update 
+// ============================== Update ==================================== 
 void update(float dt){
   float acceleration = 10;
   
@@ -270,6 +274,7 @@ void update(float dt){
     pln_flm.SetGenRate(20*(5-B.health));
     pln_flm.Update(dt, true, false, true);
   }
+  spark.Update(dt, false, true, false);
   for (ptc_sys flm:car_flm){
     flm.Update(dt, false, false, false);
   }
@@ -305,6 +310,9 @@ void update(float dt){
      
       if(dis(bullet.pos,B.pos)<30.0){//hit Check
         B.health--;
+        spark = new ptc_sys(500, 2, bullet.pos, new PVector(2,2) // spawn spark
+        , new PVector(0, -5), 180);
+        spark.spawnParticles(dt);
         fort.bullet_list.remove(i);
         continue;
       }
@@ -452,7 +460,7 @@ void drawScene(){
   }
   
   
-  // plane smoke
+  // plane smoke and spark
   for (int i = 0; i < pln_flm.POS.size(); i++) {
     float lf = pln_flm.LIFE.get(i);
     float clr = 50*B.health;
@@ -460,6 +468,12 @@ void drawScene(){
     stroke(clr,clr,clr,lf*50);
     point(pln_flm.POS.get(i).x, pln_flm.POS.get(i).y);
   }
+  for (int i = 0; i < spark.POS.size(); i++) {
+    strokeWeight(2);
+    stroke(255,125*spark.LIFE.get(i),0, 80);
+    point(spark.POS.get(i).x, spark.POS.get(i).y);
+  }
+  
   // car flame and smoke
   for (ptc_sys smk:car_smk){
     for (int i = 0; i < smk.POS.size(); i++) {
@@ -511,7 +525,7 @@ void drawScene(){
         fill(255, 0, 0);
         circle(car.t_pos.x-(car.t_center+1)*50*cos(car.t_angle*PI/180), car.t_pos.y-(car.t_center+1)*50*sin(car.t_angle*PI/180),5);
         fill(0, 255, 255);
-        circle(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180),5); //<>//
+        circle(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180),5);
         
         
       }
