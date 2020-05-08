@@ -374,16 +374,24 @@ void update(float dt){
       }
       
       if(car.t_flip){
-        if(car.t_center<0&&p2.y>880){//right end hit ground
+        
+        //gravity cause angel verlocity acceleration 
+        float left_height=p1.x<p2.x?p1.y:p2.y;
+        float right_height=p1.x>p2.x?p1.y:p2.y;
+        if(abs(left_height-right_height)>2){//swing
+          car.t_ang_ver+=left_height>right_height?0.05:-0.05;
+        }
+        
+        if(car.t_center<0&&p2.y>880){//while left end is on the ground,right end hit ground
           
           car.t_center=0.72; 
           car.t_pos.set(p2.x,p2.y);
-          car.t_ang_ver*=0.5;
-        }else if(car.t_center>0&&p1.y>880){//left end hit ground
+          car.t_ang_ver*=0.92;
+        }else if(car.t_center>0&&p1.y>880){//while right end is on the ground,,left end hit ground
           
           car.t_center=-1;
           car.t_pos.set(p1.x,p1.y);
-          car.t_ang_ver*=0.5;
+          car.t_ang_ver*=0.92;
         }
       }
       
