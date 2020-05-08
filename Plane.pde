@@ -33,7 +33,8 @@ void setup() {
 void init() {
   B = new Bomber();
   b = new Bomb(B);
-  pln_smk = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30);
+  pln_flm = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30);
+  car_flm = new ArrayList<ptc_sys>();
   car_smk = new ArrayList<ptc_sys>();
   fort = new Fort(new PVector(800,880));
   cars=new ArrayList<Car>();
@@ -120,7 +121,7 @@ class ptc_sys{
     LIFE = new ArrayList<Float>();
   }
   
-  public void Update(float dt, boolean track, boolean expl){ // update particle system
+  public void Update(float dt, boolean track, boolean expl, boolean smk){ // update particle system
     if (track){
       src_pos = B.pos;
       ini_vel = PVector.mult(B.vel, -0.5);
@@ -132,9 +133,7 @@ class ptc_sys{
       POS.get(i).x += VEL.get(i).x * dt;
       POS.get(i).y += VEL.get(i).y * dt;
       // Update velocity
-      VEL.get(i).y -= 0.6;
-      //COL.get(i).y = ((1 - LIFE.get(i) / lifespan) * 255);
-      //println(LIFE.get(i));
+      if (!smk) VEL.get(i).y -= 0.6;
       LIFE.set(i, LIFE.get(i) - dt);
     }
   }
@@ -211,8 +210,10 @@ class ptc_sys{
 
 // ==============================================================================
 
-ptc_sys pln_smk;// plane smoke
-ArrayList<ptc_sys> car_smk;
+ptc_sys pln_flm;// plane smoke
+ArrayList<ptc_sys> car_flm; // car flame
+ArrayList<ptc_sys> car_smk; // car smoke
+
 
 //Animation Principle: Separate Physical Update 
 void update(float dt){
@@ -266,11 +267,14 @@ void update(float dt){
   
   //Smoke Update
   if (B.health < 5){ // Plane emit smoke
-    pln_smk.SetGenRate(20*(5-B.health));
-    pln_smk.Update(dt, true, false);
+    pln_flm.SetGenRate(20*(5-B.health));
+    pln_flm.Update(dt, true, false, true);
+  }
+  for (ptc_sys flm:car_flm){
+    flm.Update(dt, false, false, false);
   }
   for (ptc_sys smk:car_smk){
-    smk.Update(dt, false, false);
+    smk.Update(dt, false, false, true);
   }
   
   
@@ -312,13 +316,25 @@ void update(float dt){
   for(int i=0;i<cars.size();i++){
     Car car=cars.get(i);
     
-    if(cheat||B.cooldown&&dis(b.pos,car.pos)<50){//hit check
+    if(car.alive && (cheat||B.cooldown&&dis(b.pos,car.pos)<50)){//hit check
       if(cheat){
         cheat=false;
       }
+      PVector flm_pos = car.pos.copy();
+      if (car.type == 1){ // tank
+        flm_pos.y = 870;
+        flm_pos.x += 10;
+        car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
+        flm_pos.y -= 20;
+        car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
+      }
+      else{
+        flm_pos.y = 850;
+        car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
+        flm_pos.y -= 20;
+        car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
+      }
       car.alive=false;
-      car_smk.add(new ptc_sys(30, 5, b.pos, new PVector(20, 5), new PVector(0, -1), 60));
-
       println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
       car.t_up=true;
       car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
@@ -404,7 +420,7 @@ void update(float dt){
       
       
     }//end car.t_up
-    
+      
   }
   
   
@@ -412,7 +428,7 @@ void update(float dt){
   
 }
 
-
+// =========================== Draw Scene ========================
 
 void drawScene(){
   
@@ -437,17 +453,27 @@ void drawScene(){
   
   
   // plane smoke
-  for (int i = 0; i < pln_smk.POS.size(); i++) {
-    strokeWeight(5 - pln_smk.LIFE.get(i));
-    stroke(0,0,0,(pln_smk.LIFE.get(i))*50);
-    point(pln_smk.POS.get(i).x, pln_smk.POS.get(i).y);
+  for (int i = 0; i < pln_flm.POS.size(); i++) {
+    float lf = pln_flm.LIFE.get(i);
+    float clr = 50*B.health;
+    strokeWeight(6 - lf);
+    stroke(clr,clr,clr,lf*50);
+    point(pln_flm.POS.get(i).x, pln_flm.POS.get(i).y);
   }
-  // car smoke
+  // car flame and smoke
   for (ptc_sys smk:car_smk){
     for (int i = 0; i < smk.POS.size(); i++) {
-      strokeWeight(7 - smk.LIFE.get(i));
-      stroke(255,(smk.LIFE.get(i))*50,0,(smk.LIFE.get(i))*50);
+      //strokeWeight(7 - smk.LIFE.get(i));
+      strokeWeight(10 - 0.5*smk.LIFE.get(i));
+      stroke(0,0,0,(smk.LIFE.get(i))*10);
       point(smk.POS.get(i).x, smk.POS.get(i).y);
+    }
+  }
+  for (ptc_sys flm:car_flm){
+    for (int i = 0; i < flm.POS.size(); i++) {
+      strokeWeight(7 - flm.LIFE.get(i));
+      stroke(255,(flm.LIFE.get(i))*50,0,(flm.LIFE.get(i))*50);
+      point(flm.POS.get(i).x, flm.POS.get(i).y);
     }
   }
   noStroke();
