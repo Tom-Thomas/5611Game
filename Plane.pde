@@ -414,15 +414,17 @@ void update(float dt){
         }
         
         if(car.t_center<0&&p2.y>880){//while left end is on the ground,right end hit ground
-          
-          car.t_center=0.72; 
-          car.t_pos.set(p2.x,p2.y);
-          car.t_ang_ver*=0.92;
+          if(p1.x<p2.x&&car.t_ang_ver>0||p1.x>p2.x&&car.t_ang_ver<0){//make sure p2 is going down
+            car.t_center=0.72; 
+            car.t_pos.set(p2.x,p2.y);
+            car.t_ang_ver*=0.5;
+          }
         }else if(car.t_center>0&&p1.y>880){//while right end is on the ground,,left end hit ground
-          
-          car.t_center=-1;
-          car.t_pos.set(p1.x,p1.y);
-          car.t_ang_ver*=0.92;
+           if(p1.x>p2.x&&car.t_ang_ver>0||p1.x<p2.x&&car.t_ang_ver<0){//make sure p1 is going down
+            car.t_center=-1;
+            car.t_pos.set(p1.x,p1.y);
+            car.t_ang_ver*=0.5;
+           }
         }
       }
       
