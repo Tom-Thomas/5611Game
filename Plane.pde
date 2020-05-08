@@ -294,11 +294,18 @@ void update(float dt){
   if(fort.cooldown<0){
     fort.cooldown=0;
   }
+  if(b.pos.y>850&&dis(b.pos,fort.pos)<40.0){//bomb hit fort Check
+    fort.health--;
+    if(fort.health<=0){
+    //fort dead
+    }
+
+  }
   
   
   
   
-  //Fort bullet update
+  //Fort's bullet update
   for(int i=fort.bullet_list.size()-1;i>=0;i--){
      Bullet bullet=fort.bullet_list.get(i);
      bullet.pos.x+=bullet_v*dt*sin(bullet.angle*PI/180.0);
@@ -308,7 +315,7 @@ void update(float dt){
        continue;
      }
      
-      if(dis(bullet.pos,B.pos)<30.0){//hit Check
+      if(dis(bullet.pos,B.pos)<30.0){//bullet hit bomber Check
         B.health--;
         spark = new ptc_sys(500, 2, bullet.pos, new PVector(2,2) // spawn spark
         , new PVector(0, -5), 180);
@@ -316,6 +323,8 @@ void update(float dt){
         fort.bullet_list.remove(i);
         continue;
       }
+      
+      
   }
   
   
@@ -324,8 +333,8 @@ void update(float dt){
   for(int i=0;i<cars.size();i++){
     Car car=cars.get(i);
     
-    if(car.alive && (B.cooldown&&dis(b.pos,car.pos)<50)){//hit check
-      
+    if(car.alive && b.pos.y>850&&(B.cooldown&&dis(b.pos,car.pos)<(car.type==1?50:60))){//bomb hit car check
+
       PVector flm_pos = car.pos.copy();
       if (car.type == 1){ // tank
         flm_pos.y = 870;
@@ -554,6 +563,20 @@ void drawScene(){
    scale(0.4);
    image(gunbase, 0, 0);
    popMatrix();
+   
+   //test
+   if(cheat){
+   stroke(255,0,0);
+   noFill();
+   circle(fort.pos.x,fort.pos.y,80);
+   circle(B.pos.x,B.pos.y,60);
+   for(Car car:cars){
+     circle(car.pos.x,car.pos.y,(car.type==1?100:120));
+   }
+   stroke(255,0,0);
+   line(0,850,1600,850);
+   }
+   
   
 }
 
@@ -585,7 +608,10 @@ void keyPressed()
   
   if (keyCode == ESC  ) exit();
   
-  if (keyCode == 'C'  ) cheat=true;
+  if (keyCode == 'C'  ) {
+    if(cheat)cheat=false;
+    else cheat=true;
+  }
   
   if (keyCode == 'R'  ) init();
   
