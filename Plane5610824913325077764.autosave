@@ -107,7 +107,7 @@ class ptc_sys{
   float ptb_angle; // ini_vel perturbation angle
   
   ptc_sys(float gr, float ls, PVector pos, PVector dim, PVector vel, float ptb){
-    gen_rate = gr; //<>//
+    gen_rate = gr;
     lifespan = ls;
     src_pos = pos.copy();
     src_dim = dim.copy();
@@ -133,11 +133,11 @@ class ptc_sys{
       POS.get(i).y += VEL.get(i).y * dt;
       // Update velocity
       VEL.get(i).y -= 0.6;
-      //COL.get(i).y = ((1 - LIFE.get(i) / lifespan) * 255);
-      //println(LIFE.get(i));
       LIFE.set(i, LIFE.get(i) - dt);
     }
   }
+  
+  
   
   // Generate particles for a timestep
   void spawnParticles(float dt) {
@@ -212,9 +212,11 @@ class ptc_sys{
 // ==============================================================================
 
 ptc_sys pln_smk;// plane smoke
-ArrayList<ptc_sys> car_smk;
+ArrayList<ptc_sys> car_smk;// car smoke
 
-//Animation Principle: Separate Physical Update 
+
+//============================ Update =============================
+
 void update(float dt){
   float acceleration = 10;
   
@@ -264,14 +266,15 @@ void update(float dt){
   }
   
   
-  //Smoke Update
-  if (B.health < 5){ // Plane emit smoke
+  // Smoke Update
+  if (B.health < 5){ // Plane smoke
     pln_smk.SetGenRate(20*(5-B.health));
     pln_smk.Update(dt, true, false);
   }
-  for (ptc_sys smk:car_smk){
+  for (ptc_sys smk : car_smk){ // Car smoke
     smk.Update(dt, false, false);
   }
+  
   
   
   //Fort update
@@ -317,28 +320,15 @@ void update(float dt){
         cheat=false;
       }
       car.alive=false;
-      car_smk.add(new ptc_sys(30, 5, b.pos, new PVector(20, 5), new PVector(0, -1), 60));
-
-      println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
+      
+      car_smk.add(new ptc_sys(30, 5, b.pos, new PVector(20, 2) // car emitt smoke
+      , new PVector(0,-1), 60));
+      
+      println("car is hitted");//hit turrent
       car.t_up=true;
-      car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
+      car.t_vel.set(b.vel.x*0.15,b.vel.y*-1*0.1);
       car.t_pos.set(car.pos.x,car.pos.y-10.0);
-      
-      //test
-      /*
-      if(abs(car.t_vel.x)<2){
-        car.t_vel.x=-2;
-      }
-      if(car.t_vel.y>-12){
-        car.t_vel.y=-12;
-      }
-      */
-      
       car.t_ang_ver=7.0;
-      if(car.t_vel.x<0){
-        car.t_ang_ver=-7.0;
-      }
-      
     }
     
     if(car.alive){
@@ -354,56 +344,33 @@ void update(float dt){
     
     //turrent update
     if(car.t_up){ 
-      
-      PVector p1=new PVector(car.t_pos.x-(car.t_center+1)*50*cos(car.t_angle*PI/180), car.t_pos.y-(car.t_center+1)*50*sin(car.t_angle*PI/180));//left end of the rod
-      PVector p2=new PVector(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180));//right end of the rod
-      
-      car.t_angle+=car.t_ang_ver;
-           
-      if(!car.t_flip){
-        car.t_vel.y+=4*dt;
-        car.t_pos.x+=car.t_vel.x;
-        car.t_pos.y+=car.t_vel.y;
-        
-        if(p1.y>880&&p2.y<880){//left end hit ground
-          car.t_flip=true;
-          car.t_center=-1;
-          car.t_vel.set(0,0);
-          car.t_pos.set(p1.x,p1.y);
-          car.t_ang_ver*=0.72/1.72;
-        }else if(p2.y>880&&p1.y<880){//right end hit ground
-          car.t_flip=true;
-          car.t_center=0.72;
-          car.t_vel.set(0,0);
-          car.t_pos.set(p2.x,p2.y);
-          car.t_ang_ver*=1.0/1.72;
-        }
+      car.t_vel.y+=4*dt;
+      car.t_pos.x+=car.t_vel.x;
+      car.t_pos.y+=car.t_vel.y;
+      if(car.t_vel.x>0){
+        car.t_angle+=car.t_ang_ver;
+      }else{
+        car.t_angle-=car.t_ang_ver;
       }
       
-      if(car.t_flip){
+      //rigid
+      PVector p1=new PVector(car.t_pos.x-50*cos(car.t_angle*PI/180), car.t_pos.y-50*sin(car.t_angle*PI/180));//left end of the rod
+      PVector p2=new PVector(car.t_pos.x+36*cos(car.t_angle*PI/180), car.t_pos.y+36*sin(car.t_angle*PI/180));//right end of the rod
+      
+      if(car.t_pos.y>870){
+        car.t_up=false;
+        car.t_pos.y=870;
+      }else if(p1.y>870&&p2.y<870){
+        car.t_center=-1;
+        car.t_vel.set(0,0);
         
-        //gravity cause angel verlocity acceleration 
-        float left_height=p1.x<p2.x?p1.y:p2.y;
-        float right_height=p1.x>p2.x?p1.y:p2.y;
-        if(abs(left_height-right_height)>2){//swing
-          car.t_ang_ver+=left_height>right_height?0.05:-0.05;
-        }
-        
-        if(car.t_center<0&&p2.y>880){//while left end is on the ground,right end hit ground
-          
-          car.t_center=0.72; 
-          car.t_pos.set(p2.x,p2.y);
-          car.t_ang_ver*=0.92;
-        }else if(car.t_center>0&&p1.y>880){//while right end is on the ground,,left end hit ground
-          
-          car.t_center=-1;
-          car.t_pos.set(p1.x,p1.y);
-          car.t_ang_ver*=0.92;
-        }
+      }else if(p2.y>870&&p1.y<870){
+        car.t_center=1;
+        car.t_vel.set(0,0);
       }
       
       
-    }//end car.t_up
+    }
     
   }
   
@@ -413,6 +380,8 @@ void update(float dt){
 }
 
 
+
+// ========================= Draw Scene ==========================
 
 void drawScene(){
   
@@ -442,14 +411,20 @@ void drawScene(){
     stroke(0,0,0,(pln_smk.LIFE.get(i))*50);
     point(pln_smk.POS.get(i).x, pln_smk.POS.get(i).y);
   }
+  
   // car smoke
-  for (ptc_sys smk:car_smk){
+  for (ptc_sys smk : car_smk){
     for (int i = 0; i < smk.POS.size(); i++) {
       strokeWeight(7 - smk.LIFE.get(i));
-      stroke(255,(smk.LIFE.get(i))*50,0,(smk.LIFE.get(i))*50);
+      //stroke(0,0,0,(smk.LIFE.get(i))*50);
+      float lf = smk.LIFE.get(i);
+      if (lf>2.5) stroke(255, 255, 255 - (lf*100), (smk.LIFE.get(i))*50);
+      else stroke(255, 255-(lf*100), 0,(smk.LIFE.get(i))*50);
+      //else noStroke();
       point(smk.POS.get(i).x, smk.POS.get(i).y);
     }
   }
+  
   noStroke();
    
    //bullet
@@ -471,21 +446,16 @@ void drawScene(){
       }else{
         image(tanktbody,car.pos.x, car.pos.y+8.0,250.0*0.4,56.0*0.4);
         
-        //turrent
         pushMatrix();
-        
-        translate(car.t_pos.x-car.t_center*50*cos(car.t_angle*PI/180), car.t_pos.y-car.t_center*50*sin(car.t_angle*PI/180));
-        
+        translate(car.t_pos.x, car.t_pos.y);
         rotate((car.t_angle)*PI/180.0);
         imageMode(CENTER);
         image(tankturrent,0, 0,250.0*0.4,33.0*0.4);
         popMatrix();
-        
-        //test ends
         fill(255, 0, 0);
-        circle(car.t_pos.x-(car.t_center+1)*50*cos(car.t_angle*PI/180), car.t_pos.y-(car.t_center+1)*50*sin(car.t_angle*PI/180),5);
+        circle(car.t_pos.x-50*cos(car.t_angle*PI/180), car.t_pos.y-50*sin(car.t_angle*PI/180),5);
         fill(0, 255, 255);
-        circle(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180),5); //<>//
+        circle(car.t_pos.x+36*cos(car.t_angle*PI/180), car.t_pos.y+36*sin(car.t_angle*PI/180),5);
         
         
       }
@@ -531,7 +501,7 @@ void keyPressed()
   if (B.health > 0){
     if (keyCode == 'W') B.up = true;
     else if (keyCode == 'S') B.down = true;
-  } //<>//
+  }
   // Bomb
   if (keyCode ==   ' ' && B.cooldown == false){ // drop bomb
     B.cooldown = true;
@@ -613,10 +583,9 @@ class Car{
   PVector t_pos;//turrent position
   float t_angle;//turrent angle
   PVector t_vel;//turrent velocity
-  boolean t_up=false;//whether turrent is moving
-  boolean t_flip=false;//whether turrent is flipping on the ground
+  boolean t_up;//whether turrent is floating
   float t_ang_ver;//turrent angle velocity
-  float t_center;//rotate center -1~+0.72
+  int t_center;//rotate center -1~+1
   float speed;
   int type;//1 tank, 2 truck
   boolean alive;
