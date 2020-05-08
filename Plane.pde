@@ -324,10 +324,8 @@ void update(float dt){
   for(int i=0;i<cars.size();i++){
     Car car=cars.get(i);
     
-    if(car.alive && (cheat||B.cooldown&&dis(b.pos,car.pos)<50)){//hit check
-      if(cheat){
-        cheat=false;
-      }
+    if(car.alive && (B.cooldown&&dis(b.pos,car.pos)<50)){//hit check
+      
       PVector flm_pos = car.pos.copy();
       if (car.type == 1){ // tank
         flm_pos.y = 870;
@@ -335,18 +333,24 @@ void update(float dt){
         car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
         flm_pos.y -= 20;
         car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
+        
+        car.t_up=true;
+        car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
+        car.t_pos.set(car.pos.x,car.pos.y-10.0);
+        car.t_ang_ver=7.0;
+        if(car.t_vel.x<0){
+          car.t_ang_ver=-7.0;
+        }
       }
-      else{
+      else{//truck
         flm_pos.y = 850;
         car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
         flm_pos.y -= 20;
         car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
       }
       car.alive=false;
-      println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
-      car.t_up=true;
-      car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
-      car.t_pos.set(car.pos.x,car.pos.y-10.0);
+      //println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
+      
       
       //test
       /*
@@ -358,12 +362,9 @@ void update(float dt){
       }
       */
       
-      car.t_ang_ver=7.0;
-      if(car.t_vel.x<0){
-        car.t_ang_ver=-7.0;
-      }
       
-    }
+      
+    }//end hit check
     
     if(car.alive){
       float safe_distance=108;
@@ -524,10 +525,12 @@ void drawScene(){
         popMatrix();
         
         //test ends
+        /*
         fill(255, 0, 0);
         circle(car.t_pos.x-(car.t_center+1)*50*cos(car.t_angle*PI/180), car.t_pos.y-(car.t_center+1)*50*sin(car.t_angle*PI/180),5);
         fill(0, 255, 255);
         circle(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180),5);
+        */
         
         
       }
