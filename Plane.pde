@@ -312,11 +312,26 @@ void update(float dt){
       }
       car.alive=false;
 
-      println("car is hitted");//hit turrent
+      println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
       car.t_up=true;
-      car.t_vel.set(b.vel.x*0.15,b.vel.y*-1*0.1);
+      car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
       car.t_pos.set(car.pos.x,car.pos.y-10.0);
+      
+      //test
+      /*
+      if(abs(car.t_vel.x)<2){
+        car.t_vel.x=-2;
+      }
+      if(car.t_vel.y>-12){
+        car.t_vel.y=-12;
+      }
+      */
+      
       car.t_ang_ver=7.0;
+      if(car.t_vel.x<0){
+        car.t_ang_ver=-7.0;
+      }
+      
     }
     
     if(car.alive){
@@ -332,33 +347,56 @@ void update(float dt){
     
     //turrent update
     if(car.t_up){ 
-      car.t_vel.y+=4*dt;
-      car.t_pos.x+=car.t_vel.x;
-      car.t_pos.y+=car.t_vel.y;
-      if(car.t_vel.x>0){
-        car.t_angle+=car.t_ang_ver;
-      }else{
-        car.t_angle-=car.t_ang_ver;
-      }
       
-      //rigid
-      PVector p1=new PVector(car.t_pos.x-50*cos(car.t_angle*PI/180), car.t_pos.y-50*sin(car.t_angle*PI/180));//left end of the rod
-      PVector p2=new PVector(car.t_pos.x+36*cos(car.t_angle*PI/180), car.t_pos.y+36*sin(car.t_angle*PI/180));//right end of the rod
+      PVector p1=new PVector(car.t_pos.x-(car.t_center+1)*50*cos(car.t_angle*PI/180), car.t_pos.y-(car.t_center+1)*50*sin(car.t_angle*PI/180));//left end of the rod
+      PVector p2=new PVector(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180));//right end of the rod
       
-      if(car.t_pos.y>870){
-        car.t_up=false;
-        car.t_pos.y=870;
-      }else if(p1.y>870&&p2.y<870){
-        car.t_center=-1;
-        car.t_vel.set(0,0);
+      car.t_angle+=car.t_ang_ver;
+           
+      if(!car.t_flip){
+        car.t_vel.y+=4*dt;
+        car.t_pos.x+=car.t_vel.x;
+        car.t_pos.y+=car.t_vel.y;
         
-      }else if(p2.y>870&&p1.y<870){
-        car.t_center=1;
-        car.t_vel.set(0,0);
+        if(p1.y>880&&p2.y<880){//left end hit ground
+          car.t_flip=true;
+          car.t_center=-1;
+          car.t_vel.set(0,0);
+          car.t_pos.set(p1.x,p1.y);
+          car.t_ang_ver*=0.72/1.72;
+        }else if(p2.y>880&&p1.y<880){//right end hit ground
+          car.t_flip=true;
+          car.t_center=0.72;
+          car.t_vel.set(0,0);
+          car.t_pos.set(p2.x,p2.y);
+          car.t_ang_ver*=1.0/1.72;
+        }
+      }
+      
+      if(car.t_flip){
+        
+        //gravity cause angel verlocity acceleration 
+        float left_height=p1.x<p2.x?p1.y:p2.y;
+        float right_height=p1.x>p2.x?p1.y:p2.y;
+        if(abs(left_height-right_height)>2){//swing
+          car.t_ang_ver+=left_height>right_height?0.05:-0.05;
+        }
+        
+        if(car.t_center<0&&p2.y>880){//while left end is on the ground,right end hit ground
+          
+          car.t_center=0.72; 
+          car.t_pos.set(p2.x,p2.y);
+          car.t_ang_ver*=0.92;
+        }else if(car.t_center>0&&p1.y>880){//while right end is on the ground,,left end hit ground
+          
+          car.t_center=-1;
+          car.t_pos.set(p1.x,p1.y);
+          car.t_ang_ver*=0.92;
+        }
       }
       
       
-    }
+    }//end car.t_up
     
   }
   
@@ -417,16 +455,21 @@ void drawScene(){
       }else{
         image(tanktbody,car.pos.x, car.pos.y+8.0,250.0*0.4,56.0*0.4);
         
+        //turrent
         pushMatrix();
-        translate(car.t_pos.x, car.t_pos.y);
+        
+        translate(car.t_pos.x-car.t_center*50*cos(car.t_angle*PI/180), car.t_pos.y-car.t_center*50*sin(car.t_angle*PI/180));
+        
         rotate((car.t_angle)*PI/180.0);
         imageMode(CENTER);
         image(tankturrent,0, 0,250.0*0.4,33.0*0.4);
         popMatrix();
+        
+        //test ends
         fill(255, 0, 0);
-        circle(car.t_pos.x-50*cos(car.t_angle*PI/180), car.t_pos.y-50*sin(car.t_angle*PI/180),5);
+        circle(car.t_pos.x-(car.t_center+1)*50*cos(car.t_angle*PI/180), car.t_pos.y-(car.t_center+1)*50*sin(car.t_angle*PI/180),5);
         fill(0, 255, 255);
-        circle(car.t_pos.x+36*cos(car.t_angle*PI/180), car.t_pos.y+36*sin(car.t_angle*PI/180),5); //<>//
+        circle(car.t_pos.x+(0.72-car.t_center)*50*cos(car.t_angle*PI/180), car.t_pos.y+(0.72-car.t_center)*50*sin(car.t_angle*PI/180),5); //<>//
         
         
       }
@@ -554,9 +597,10 @@ class Car{
   PVector t_pos;//turrent position
   float t_angle;//turrent angle
   PVector t_vel;//turrent velocity
-  boolean t_up;//whether turrent is floating
+  boolean t_up=false;//whether turrent is moving
+  boolean t_flip=false;//whether turrent is flipping on the ground
   float t_ang_ver;//turrent angle velocity
-  int t_center;//rotate center -1~+1
+  float t_center;//rotate center -1~+0.72
   float speed;
   int type;//1 tank, 2 truck
   boolean alive;
