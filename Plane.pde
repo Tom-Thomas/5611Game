@@ -37,6 +37,8 @@ void init() {
   fort = new Fort(new PVector(800,880));
   pln_smk = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   spark = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
+  expl_m = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
+  expl_h = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   fort_smk = new ptc_sys(0, 20, fort.pos, new PVector(10,5), new PVector(0, -5), 60);
   car_flm = new ArrayList<ptc_sys>();
   car_smk = new ArrayList<ptc_sys>();
@@ -102,7 +104,7 @@ class Bomb{
 class ptc_sys{
   public ArrayList<PVector> POS; // position
   ArrayList<PVector> VEL; // velocity
-  ArrayList<PVector> COL; // color
+  //ArrayList<PVector> COL; // color
   ArrayList<Float> LIFE; // remaining life
   float gen_rate;
   float lifespan;
@@ -121,7 +123,7 @@ class ptc_sys{
     
     POS = new ArrayList<PVector>();
     VEL = new ArrayList<PVector>();
-    COL = new ArrayList<PVector>();
+    //COL = new ArrayList<PVector>();
     LIFE = new ArrayList<Float>();
   }
   
@@ -163,11 +165,11 @@ class ptc_sys{
   void ParticleGen() {
     PVector p = GenPos(src_pos, src_dim);
     PVector v = GenVel(ini_vel, ptb_angle);
-    PVector c = new PVector(255, 255, 255);
+    //PVector c = new PVector(255, 255, 255);
     float life = GenLife(lifespan);
     POS.add(p);
     VEL.add(v);
-    COL.add(c);
+    //COL.add(c);
     LIFE.add(life);
   }
   
@@ -204,7 +206,7 @@ class ptc_sys{
       int tmp = DelList.get(i);
       POS.remove(tmp);
       VEL.remove(tmp);
-      COL.remove(tmp);
+      //COL.remove(tmp);
       LIFE.remove(tmp);
     }
   }
@@ -219,8 +221,12 @@ class ptc_sys{
 ptc_sys pln_smk; // plane smoke
 ptc_sys spark; // spark when the plane is hit
 ptc_sys fort_smk; // fort smoke
+ptc_sys expl_m; // explosion missed
+ptc_sys expl_h; // explosion hit
+
 ArrayList<ptc_sys> car_flm; // car flame
 ArrayList<ptc_sys> car_smk; // car smoke
+
 
 
 // ============================== Update ==================================== 
@@ -271,7 +277,10 @@ void update(float dt){
 
     if (b.pos.y >= 880) {// ground Collision Check
       B.cooldown = false;
-      b.pos.set(0,0);
+      //b.pos.set(0,0);
+      expl_m = new ptc_sys(1000, 8, new PVector(b.pos.x,880), new PVector(10,2) // spawn explosion
+        , new PVector(0, -5), 80);
+      expl_m.spawnParticles(dt);
     }
   }
   
@@ -282,8 +291,10 @@ void update(float dt){
     pln_smk.Update(dt, true, false, true);
   }
   spark.Update(dt, false, true, false); // spark when plane is hit
+  expl_h.Update(dt, false, true, false); // explosion when hit
+  expl_m.Update(dt, false, true, false); // explosion when miss
   if (fort.health < 5){ // Fort emit smoke
-    fort_smk.SetGenRate(10*(5-fort.health)+20);
+    fort_smk.SetGenRate(40);
     fort_smk.Update(dt, false, false, true);
   }
   for (ptc_sys flm:car_flm){ // car flame
@@ -309,9 +320,13 @@ void update(float dt){
     fort.health--;
     B.cooldown = false;
     explosion_area.set(b.pos.x,b.pos.y);
-    b.pos.set(0,0);
+    //b.pos.set(0,0);
     
-    println("bomb hit fort "+b.vel.x*0.15+" "+b.vel.y*(-1)*0.2);
+    expl_h = new ptc_sys(500, 8, new PVector(b.pos.x,880), new PVector(10,2) // spawn explosion
+        , new PVector(0, -5), 80);
+    expl_h.spawnParticles(dt);
+    
+    //println("bomb hit fort "+b.vel.x*0.15+" "+b.vel.y*(-1)*0.2);
     if(fort.health<=0){
     //fort dead
     fort.g_up=true;
@@ -364,7 +379,12 @@ void update(float dt){
       car.alive=false;
       println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
       B.cooldown = false;
-      b.pos.set(0,0);
+      //b.pos.set(0,0);
+      
+      expl_h = new ptc_sys(500, 8, new PVector(b.pos.x,880), new PVector(10,2) // spawn explosion
+        , new PVector(0, -5), 80);
+      expl_h.spawnParticles(dt);
+      
       if(explosion_area.y>850){
         in_explosion_area=false;
         explosion_area.set(0,0);
@@ -578,6 +598,7 @@ void drawScene(){
   
   //bomb
   if (B.cooldown) {
+    noStroke();
     fill(0, 0, 0);
     circle(b.pos.x, b.pos.y, bomb_r);
   }
@@ -596,7 +617,7 @@ void drawScene(){
     stroke(255,125*spark.LIFE.get(i),0, 80);
     point(spark.POS.get(i).x, spark.POS.get(i).y);
   }
- 
+
   // car flame and smoke
   for (ptc_sys smk:car_smk){
     for (int i = 0; i < smk.POS.size(); i++) {
@@ -719,7 +740,18 @@ void drawScene(){
    stroke(255,0,0);
    line(0,850,1600,850);
    }
-   
+
+  for (int i = 0; i < expl_h.POS.size(); i++) { // explosion
+    strokeWeight(10);
+    stroke(255,30*expl_h.LIFE.get(i),0, expl_h.LIFE.get(i)*20);
+    point(expl_h.POS.get(i).x, expl_h.POS.get(i).y);
+  }
+  for (int i = 0; i < expl_m.POS.size(); i++) { // explosion
+    strokeWeight(10);
+    stroke(100,100,100, expl_m.LIFE.get(i)*20);
+    point(expl_m.POS.get(i).x, expl_m.POS.get(i).y);
+  }
+
   
 }
 
@@ -765,14 +797,18 @@ void keyPressed()
   
   if (keyCode == 'R'  ) init();
   
-  if (keyCode == RIGHT  ) fort.right=true;
-  
-  if (keyCode == LEFT  ) fort.left=true;
-  
-  if(keyCode == ENTER && fort.cooldown<=0){
-    fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
-    fort.cooldown+=30;
+  if(fort.health>0){
+    if (keyCode == RIGHT  ) fort.right=true;
+    else if (keyCode == LEFT  ) fort.left=true;
+    
+    if(keyCode == ENTER && fort.cooldown<=0){
+      fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
+      fort.cooldown+=30;
+    }
   }
+
+  
+
   
   
 }
@@ -784,7 +820,7 @@ void keyReleased(){
     
   if (keyCode == RIGHT  ) fort.right=false;
   
-  if (keyCode == LEFT  ) fort.left=false;
+  else if (keyCode == LEFT  ) fort.left=false;
 }
 
 
