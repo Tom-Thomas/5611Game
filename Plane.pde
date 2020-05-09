@@ -14,6 +14,7 @@ Float bomb_r=10.0;//bomb_radius
 int bomber_direction; //1:fly to right, -1:fly to left
 ArrayList <Car>cars;
 Boolean cheat=false;
+PVector explosion_area;
 
 void setup() {
   size(1600, 900, P2D);
@@ -39,6 +40,7 @@ void init() {
   car_smk = new ArrayList<ptc_sys>();
   fort = new Fort(new PVector(800,880));
   cars=new ArrayList<Car>();
+  explosion_area=new PVector(0,0);
   
   //adding cars, caution: add from the car ont the lest to the car on the right
   cars.add(new Car(1,900,870,-5));
@@ -265,7 +267,10 @@ void update(float dt){
     b.pos.add(PVector.mult(b.vel, dt));
     b.vel.y += (acceleration * dt);
 
-    if (b.pos.y >= 880) B.cooldown = false;// Collision Check
+    if (b.pos.y >= 880) {// ground Collision Check
+      B.cooldown = false;
+      b.pos.set(0,0);
+    }
   }
   
   
@@ -294,11 +299,23 @@ void update(float dt){
   if(fort.cooldown<0){
     fort.cooldown=0;
   }
-  if(b.pos.y>850&&dis(b.pos,fort.pos)<40.0){//bomb hit fort Check
+  if(fort.health>0&&B.cooldown&&b.pos.y>850&&dis(b.pos,fort.pos)<40.0){//bomb hit fort 
     fort.health--;
+    B.cooldown = false;
+    explosion_area.set(b.pos.x,b.pos.y);
+    b.pos.set(0,0);
+    
+    println("bomb hit fort "+b.vel.x*0.15+" "+b.vel.y*(-1)*0.2);
     if(fort.health<=0){
     //fort dead
-    }
+    fort.g_up=true;
+    fort.g_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
+    fort.g_pos.set(fort.pos.x,fort.pos.y-20.0);
+    fort.g_ang_ver=7.0;
+    if(fort.g_vel.x<0){
+       fort.g_ang_ver=-7.0;
+     }
+  }
 
   }
   
@@ -315,7 +332,7 @@ void update(float dt){
        continue;
      }
      
-      if(dis(bullet.pos,B.pos)<30.0){//bullet hit bomber Check
+      if(dis(bullet.pos,B.pos)<30.0){//bullet hit bomber 
         B.health--;
         spark = new ptc_sys(500, 2, bullet.pos, new PVector(2,2) // spawn spark
         , new PVector(0, -5), 180);
@@ -333,8 +350,19 @@ void update(float dt){
   for(int i=0;i<cars.size();i++){
     Car car=cars.get(i);
     
-    if(car.alive && b.pos.y>850&&(B.cooldown&&dis(b.pos,car.pos)<(car.type==1?50:60))){//bomb hit car check
-
+    boolean in_explosion_area=false;
+    if(explosion_area.y>850&&dis(explosion_area,car.pos)<(car.type==1?50:60)){
+      in_explosion_area=true;
+    }
+    if(car.alive&&(in_explosion_area|| b.pos.y>850&&(B.cooldown&&dis(b.pos,car.pos)<(car.type==1?50:60)))){//bomb hit car
+      car.alive=false;
+      println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
+      B.cooldown = false;
+      b.pos.set(0,0);
+      if(explosion_area.y>850){
+        in_explosion_area=false;
+        explosion_area.set(0,0);
+      }
       PVector flm_pos = car.pos.copy();
       if (car.type == 1){ // tank
         flm_pos.y = 870;
@@ -357,8 +385,7 @@ void update(float dt){
         flm_pos.y -= 20;
         car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
       }
-      car.alive=false;
-      //println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
+
       
       
       //test
@@ -396,8 +423,8 @@ void update(float dt){
            
       if(!car.t_flip){
         car.t_vel.y+=4*dt;
-        car.t_pos.x+=car.t_vel.x;
-        car.t_pos.y+=car.t_vel.y;
+        car.t_pos.x+=car.t_vel.x;//missing dt here
+        car.t_pos.y+=car.t_vel.y;//missing dt here
         
         if(p1.y>880&&p2.y<880){//left end hit ground
           car.t_flip=true;
@@ -437,9 +464,62 @@ void update(float dt){
            }
         }
       }
+    }//end turrent update
+    
+    //fort's gun update
+      if(fort.g_up){ 
       
+      PVector p1=new PVector(fort.g_pos.x-(fort.g_center-(-1.5))*50*cos((fort.angle+90)*PI/180), fort.g_pos.y-(fort.g_center-(-1.5))*50*sin((fort.angle+90)*PI/180));//left end of the rod
+      PVector p2=new PVector(fort.g_pos.x+(0.5-fort.g_center)*50*cos((fort.angle+90)*PI/180), fort.g_pos.y+(0.5-fort.g_center)*50*sin((fort.angle+90)*PI/180));//right end of the rod
       
-    }//end car.t_up
+      fort.angle+=fort.g_ang_ver;//missing dt here
+           
+      if(!fort.g_flip){
+        fort.g_vel.y+=4*dt;//having dt here
+        fort.g_pos.x+=fort.g_vel.x;//missing dt here
+        fort.g_pos.y+=fort.g_vel.y;//missing dt here
+        
+        if(fort.g_vel.y>0&&p1.y>880&&p2.y<880){//left end hit ground
+          fort.g_flip=true;
+          fort.g_center=-1.5;
+          fort.g_vel.set(0,0);
+          fort.g_pos.set(p1.x,p1.y);
+          fort.g_ang_ver*=0.5/2.0;
+        }else if(fort.g_vel.y>0&&p2.y>880&&p1.y<880){//right end hit ground
+          fort.g_flip=true;
+          fort.g_center=0.5;
+          fort.g_vel.set(0,0);
+          fort.g_pos.set(p2.x,p2.y);
+          fort.g_ang_ver*=1.5/2.0;
+        }
+      }
+      
+      if(fort.g_flip){
+        
+        //gravity cause angel verlocity acceleration 
+        float left_height=p1.x<p2.x?p1.y:p2.y;
+        float right_height=p1.x>p2.x?p1.y:p2.y;
+        if(abs(left_height-right_height)>2){//swing
+          fort.g_ang_ver+=left_height>right_height?0.05:-0.05;
+        }
+        
+        if(fort.g_center<0&&p2.y>880){//while left end is on the ground,right end hit ground
+          if(p1.x<p2.x&&fort.g_ang_ver>0||p1.x>p2.x&&fort.g_ang_ver<0){//make sure p2 is going down
+            fort.g_center=0.5; 
+            fort.g_pos.set(p2.x,p2.y);
+            fort.g_ang_ver*=0.5;
+          }
+        }else if(fort.g_center>0&&p1.y>880){//while right end is on the ground,,left end hit ground
+           if(p1.x>p2.x&&fort.g_ang_ver>0||p1.x<p2.x&&fort.g_ang_ver<0){//make sure p1 is going down
+            fort.g_center=-1.5;
+            fort.g_pos.set(p1.x,p1.y);
+            fort.g_ang_ver*=0.5;
+           }
+        }
+      }
+    }//end fort's gun update
+    
+    
       
   }
   
@@ -525,9 +605,7 @@ void drawScene(){
         
         //turrent
         pushMatrix();
-        
         translate(car.t_pos.x-car.t_center*50*cos(car.t_angle*PI/180), car.t_pos.y-car.t_center*50*sin(car.t_angle*PI/180));
-        
         rotate((car.t_angle)*PI/180.0);
         imageMode(CENTER);
         image(tankturrent,0, 0,250.0*0.4,33.0*0.4);
@@ -550,12 +628,32 @@ void drawScene(){
   }
 
    // fort
-   pushMatrix();
-   translate(fort.pos.x,fort.pos.y -20);
-   rotate((fort.angle-90)*PI/180.0);
-   scale(0.6);
-   image(gun, 0, 0);
-   popMatrix();
+   if(fort.health>0){
+     pushMatrix();
+     translate(fort.pos.x,fort.pos.y -20);
+     rotate((fort.angle-90)*PI/180.0);
+     scale(0.6);
+     image(gun, 0, 0);
+     popMatrix();
+   }else{
+     //gun in the air
+        pushMatrix();
+        translate(fort.g_pos.x-fort.g_center*50*cos((fort.angle+90)*PI/180), fort.g_pos.y-fort.g_center*50*sin((fort.angle+90)*PI/180));
+        rotate((fort.angle-90)*PI/180.0);
+        imageMode(CENTER);
+        scale(0.6);
+        image(gun,0, 0);
+        popMatrix();
+        
+        //test ends
+        
+        fill(255, 0, 0);
+        circle(fort.g_pos.x-(fort.g_center-(-1.5))*50*cos((fort.angle+90)*PI/180), fort.g_pos.y-(fort.g_center-(-1.5))*50*sin((fort.angle+90)*PI/180),5);
+        fill(0, 255, 255);
+        circle(fort.g_pos.x+(0.5-fort.g_center)*50*cos((fort.angle+90)*PI/180), fort.g_pos.y+(0.5-fort.g_center)*50*sin((fort.angle+90)*PI/180),5);
+        
+   }
+   
    fill(0, 0, 100);
    imageMode(CENTER);
    pushMatrix();
@@ -609,8 +707,15 @@ void keyPressed()
   if (keyCode == ESC  ) exit();
   
   if (keyCode == 'C'  ) {
-    if(cheat)cheat=false;
-    else cheat=true;
+    cheat=(cheat==false);
+    fort.health=0;
+    fort.g_up=true;
+    fort.g_vel.set(-4.5,-18.9);
+    fort.g_pos.set(fort.pos.x,fort.pos.y-20.0);
+    fort.g_ang_ver=7.0;
+    if(fort.g_vel.x<0){
+       fort.g_ang_ver=-7.0;
+     }
   }
   
   if (keyCode == 'R'  ) init();
@@ -620,7 +725,6 @@ void keyPressed()
   if (keyCode == LEFT  ) fort.left=true;
   
   if(keyCode == ENTER && fort.cooldown<=0){
-    
     fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
     fort.cooldown+=30;
   }
@@ -650,6 +754,13 @@ class Fort{
   int cooldown; // cooldown time for gun
   ArrayList<Bullet> bullet_list;
   
+  PVector g_pos;//gun position
+  PVector g_vel;//gun velocity
+  boolean g_up=false;//whether gun is moving
+  boolean g_flip=false;//whether gun is flipping on the ground
+  float g_ang_ver;//gun angle velocity
+  float g_center;//rotate center -1~+0.72
+  
   public Fort(PVector p){
     health = 5;
     
@@ -661,6 +772,10 @@ class Fort{
     sens = 40;
     cooldown = 0;
     bullet_list=new ArrayList<Bullet>();
+    g_pos=p.copy();
+    g_vel=new PVector(0,0);
+    g_ang_ver=0;
+    g_center=0;
   }
   
 }
