@@ -34,11 +34,12 @@ void setup() {
 void init() {
   B = new Bomber();
   b = new Bomb(B);
-  pln_flm = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30);
+  fort = new Fort(new PVector(800,880));
+  pln_smk = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30);
   spark = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
+  fort_smk = new ptc_sys(20, 20, fort.pos, new PVector(10,5), new PVector(0, -5), 60);
   car_flm = new ArrayList<ptc_sys>();
   car_smk = new ArrayList<ptc_sys>();
-  fort = new Fort(new PVector(800,880));
   cars=new ArrayList<Car>();
   explosion_area=new PVector(0,0);
   
@@ -215,8 +216,9 @@ class ptc_sys{
 
 // ==============================================================================
 
-ptc_sys pln_flm; // plane smoke
+ptc_sys pln_smk; // plane smoke
 ptc_sys spark; // spark when the plane is hit
+ptc_sys fort_smk; // fort smoke
 ArrayList<ptc_sys> car_flm; // car flame
 ArrayList<ptc_sys> car_smk; // car smoke
 
@@ -276,14 +278,18 @@ void update(float dt){
   
   //Smoke Update
   if (B.health < 5){ // Plane emit smoke
-    pln_flm.SetGenRate(20*(5-B.health));
-    pln_flm.Update(dt, true, false, true);
+    pln_smk.SetGenRate(20*(5-B.health));
+    pln_smk.Update(dt, true, false, true);
   }
-  spark.Update(dt, false, true, false);
-  for (ptc_sys flm:car_flm){
+  spark.Update(dt, false, true, false); // spark when plane is hit
+  if (fort.health < 5){ // Fort emit smoke
+    fort_smk.SetGenRate(10*(5-fort.health)+60);
+    fort_smk.Update(dt, false, false, true);
+  }
+  for (ptc_sys flm:car_flm){ // car flame
     flm.Update(dt, false, false, false);
   }
-  for (ptc_sys smk:car_smk){
+  for (ptc_sys smk:car_smk){ // car smoke
     smk.Update(dt, false, false, true);
   }
   
@@ -369,7 +375,7 @@ void update(float dt){
         flm_pos.x += 10;
         car_flm.add(new ptc_sys(100, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
         flm_pos.y -= 20;
-        car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
+        car_smk.add(new ptc_sys(30, 15, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
         
         car.t_up=true;
         car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
@@ -383,7 +389,7 @@ void update(float dt){
         flm_pos.y = 850;
         car_flm.add(new ptc_sys(100, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
         flm_pos.y -= 20;
-        car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
+        car_smk.add(new ptc_sys(30, 15, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
       }
 
       
@@ -562,24 +568,32 @@ void drawScene(){
   
   
   // plane smoke and spark
-  for (int i = 0; i < pln_flm.POS.size(); i++) {
-    float lf = pln_flm.LIFE.get(i);
+  for (int i = 0; i < pln_smk.POS.size(); i++) {
+    float lf = pln_smk.LIFE.get(i);
     float clr = 50*B.health;
-    strokeWeight(6 - lf);
+    strokeWeight(15 - 2*lf);
     stroke(clr,clr,clr,lf*50);
-    point(pln_flm.POS.get(i).x, pln_flm.POS.get(i).y);
+    point(pln_smk.POS.get(i).x, pln_smk.POS.get(i).y);
   }
   for (int i = 0; i < spark.POS.size(); i++) {
     strokeWeight(2);
     stroke(255,125*spark.LIFE.get(i),0, 80);
     point(spark.POS.get(i).x, spark.POS.get(i).y);
   }
-  
+  // fort smoke
+  for (int i = 0; i < fort_smk.POS.size(); i++) {
+    float lf = fort_smk.LIFE.get(i);
+    float clr = 50*fort.health;
+    strokeWeight(20 - lf);
+    stroke(clr,clr,clr,80);
+    //stroke(200,200,200,80);
+    point(fort_smk.POS.get(i).x, fort_smk.POS.get(i).y);
+  }  
   // car flame and smoke
   for (ptc_sys smk:car_smk){
     for (int i = 0; i < smk.POS.size(); i++) {
       //strokeWeight(7 - smk.LIFE.get(i));
-      strokeWeight(10 - 0.5*smk.LIFE.get(i));
+      strokeWeight(20 - 0.5*smk.LIFE.get(i));
       stroke(0,0,0,(smk.LIFE.get(i))*10);
       point(smk.POS.get(i).x, smk.POS.get(i).y);
     }
