@@ -384,6 +384,9 @@ void update(float dt){
         car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
         flm_pos.y -= 20;
         car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
+        
+        //truck swing
+        car.t_ang_ver=2;
       }
 
       
@@ -410,7 +413,18 @@ void update(float dt){
         
       car.pos.set(car.pos.x+car.speed*dt,car.pos.y);
       }
-
+    }
+    
+    if(!car.alive&&car.type==2){//truck swing
+      if(abs(car.t_angle)>1.9){//trun back
+        car.t_ang_ver=car.t_ang_ver*(-0.5);
+        if(car.t_angle>0) car.t_angle=2;
+        else car.t_angle=-2;
+      }
+      if(abs(car.t_ang_ver)>0.2||abs(car.t_angle)>0.2){//swing
+        car.t_angle=car.t_angle+car.t_ang_ver;
+      }
+      
     }
     
     //turrent update
@@ -605,7 +619,7 @@ void drawScene(){
     
     imageMode(CENTER);
      
-    if(car.type==1){
+    if(car.type==1){//tank
       
       if(car.alive){
         image(tank,car.pos.x, car.pos.y,250.0*0.4,88.0*0.4);
@@ -630,9 +644,13 @@ void drawScene(){
         
         
       }
-    }else if(car.type==2){
-      
-      image(truck,car.pos.x, car.pos.y,150.0*0.83,59.0*0.83);
+    }else if(car.type==2){//truck
+      pushMatrix();
+      translate(car.pos.x,car.pos.y);
+      rotate((car.t_angle)*PI/180.0);
+      imageMode(CENTER);
+      image(truck,0, 0,150.0*0.83,59.0*0.83);
+      popMatrix();
     }
   }
 
