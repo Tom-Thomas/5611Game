@@ -442,7 +442,11 @@ void update(float dt){
       }
       
       if(car.t_flip){
-        
+        if(abs(p1.y-p2.y)<2&&abs(car.t_ang_ver)<0.2){
+          car.t_flip=false;
+          car.t_up=false;
+          car.t_ang_ver=0;
+        }
         //gravity cause angel verlocity acceleration 
         float left_height=p1.x<p2.x?p1.y:p2.y;
         float right_height=p1.x>p2.x?p1.y:p2.y;
@@ -460,10 +464,10 @@ void update(float dt){
            if(p1.x>p2.x&&car.t_ang_ver>0||p1.x<p2.x&&car.t_ang_ver<0){//make sure p1 is going down
             car.t_center=-1;
             car.t_pos.set(p1.x,p1.y);
-            car.t_ang_ver*=0.5;
+            car.t_ang_ver*=0.05;
            }
         }
-      }
+      }//end flip
     }//end turrent update
     
     //fort's gun update
@@ -472,12 +476,13 @@ void update(float dt){
       PVector p1=new PVector(fort.g_pos.x-(fort.g_center-(-1.5))*50*cos((fort.angle+90)*PI/180), fort.g_pos.y-(fort.g_center-(-1.5))*50*sin((fort.angle+90)*PI/180));//left end of the rod
       PVector p2=new PVector(fort.g_pos.x+(0.5-fort.g_center)*50*cos((fort.angle+90)*PI/180), fort.g_pos.y+(0.5-fort.g_center)*50*sin((fort.angle+90)*PI/180));//right end of the rod
       
-      fort.angle+=fort.g_ang_ver;//missing dt here
+      float local_dt=0.20;
+      fort.angle+=fort.g_ang_ver*local_dt;//missing dt here
            
       if(!fort.g_flip){
-        fort.g_vel.y+=4*dt;//having dt here
-        fort.g_pos.x+=fort.g_vel.x;//missing dt here
-        fort.g_pos.y+=fort.g_vel.y;//missing dt here
+        fort.g_vel.y+=4*dt*local_dt;//having dt here
+        fort.g_pos.x+=fort.g_vel.x*local_dt;//missing dt here
+        fort.g_pos.y+=fort.g_vel.y*local_dt;//missing dt here
         
         if(fort.g_vel.y>0&&p1.y>880&&p2.y<880){//left end hit ground
           fort.g_flip=true;
@@ -495,7 +500,11 @@ void update(float dt){
       }
       
       if(fort.g_flip){
-        
+        if(abs(p1.y-p2.y)<2&&abs(fort.g_ang_ver)<0.2){
+          fort.g_flip=false;
+          fort.g_up=false;
+          fort.g_ang_ver=0;
+        }
         //gravity cause angel verlocity acceleration 
         float left_height=p1.x<p2.x?p1.y:p2.y;
         float right_height=p1.x>p2.x?p1.y:p2.y;
