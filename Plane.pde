@@ -35,9 +35,9 @@ void init() {
   B = new Bomber();
   b = new Bomb(B);
   fort = new Fort(new PVector(800,880));
-  pln_smk = new ptc_sys(20, 5, B.pos, new PVector(5,5), B.vel, 30);
+  pln_smk = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   spark = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
-  fort_smk = new ptc_sys(20, 20, fort.pos, new PVector(10,5), new PVector(0, -5), 60);
+  fort_smk = new ptc_sys(0, 20, fort.pos, new PVector(10,5), new PVector(0, -5), 60);
   car_flm = new ArrayList<ptc_sys>();
   car_smk = new ArrayList<ptc_sys>();
   cars=new ArrayList<Car>();
@@ -278,12 +278,12 @@ void update(float dt){
   
   //Smoke Update
   if (B.health < 5){ // Plane emit smoke
-    pln_smk.SetGenRate(20*(5-B.health));
+    pln_smk.SetGenRate(10*(5-B.health)+10);
     pln_smk.Update(dt, true, false, true);
   }
   spark.Update(dt, false, true, false); // spark when plane is hit
   if (fort.health < 5){ // Fort emit smoke
-    fort_smk.SetGenRate(10*(5-fort.health)+60);
+    fort_smk.SetGenRate(10*(5-fort.health)+20);
     fort_smk.Update(dt, false, false, true);
   }
   for (ptc_sys flm:car_flm){ // car flame
@@ -373,9 +373,9 @@ void update(float dt){
       if (car.type == 1){ // tank
         flm_pos.y = 870;
         flm_pos.x += 10;
-        car_flm.add(new ptc_sys(100, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
+        car_flm.add(new ptc_sys(50, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
         flm_pos.y -= 20;
-        car_smk.add(new ptc_sys(30, 15, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
+        car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
         
         car.t_up=true;
         car.t_vel.set(b.vel.x*0.15,b.vel.y*(-1)*0.2);
@@ -387,9 +387,9 @@ void update(float dt){
       }
       else{//truck
         flm_pos.y = 850;
-        car_flm.add(new ptc_sys(100, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
+        car_flm.add(new ptc_sys(50, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
         flm_pos.y -= 20;
-        car_smk.add(new ptc_sys(30, 15, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
+        car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
         
         //truck swing
         car.t_ang_ver=2;
@@ -561,6 +561,8 @@ void update(float dt){
 
 void drawScene(){
   
+  println(round(frameRate));
+  
   // sky
   background(sky);
   
@@ -594,15 +596,7 @@ void drawScene(){
     stroke(255,125*spark.LIFE.get(i),0, 80);
     point(spark.POS.get(i).x, spark.POS.get(i).y);
   }
-  // fort smoke
-  for (int i = 0; i < fort_smk.POS.size(); i++) {
-    float lf = fort_smk.LIFE.get(i);
-    float clr = 50*fort.health;
-    strokeWeight(20 - lf);
-    stroke(clr,clr,clr,80);
-    //stroke(200,200,200,80);
-    point(fort_smk.POS.get(i).x, fort_smk.POS.get(i).y);
-  }  
+ 
   // car flame and smoke
   for (ptc_sys smk:car_smk){
     for (int i = 0; i < smk.POS.size(); i++) {
@@ -614,7 +608,7 @@ void drawScene(){
   }
   for (ptc_sys flm:car_flm){
     for (int i = 0; i < flm.POS.size(); i++) {
-      strokeWeight(7 - flm.LIFE.get(i));
+      strokeWeight(10 - flm.LIFE.get(i));
       stroke(255,(flm.LIFE.get(i))*50,0,(flm.LIFE.get(i))*50);
       point(flm.POS.get(i).x, flm.POS.get(i).y);
     }
@@ -693,7 +687,7 @@ void drawScene(){
         fill(0, 255, 255);
         circle(fort.g_pos.x+(0.5-fort.g_center)*50*cos((fort.angle+90)*PI/180), fort.g_pos.y+(0.5-fort.g_center)*50*sin((fort.angle+90)*PI/180),5);
         
-   }
+   } 
    
    fill(0, 0, 100);
    imageMode(CENTER);
@@ -702,6 +696,16 @@ void drawScene(){
    scale(0.4);
    image(gunbase, 0, 0);
    popMatrix();
+
+    // fort smoke
+    for (int i = 0; i < fort_smk.POS.size(); i++) {
+      float lf = fort_smk.LIFE.get(i);
+      float clr = 50*fort.health;
+      strokeWeight(20 - lf);
+      stroke(clr,clr,clr,20);
+      //stroke(200,200,200,80);
+      point(fort_smk.POS.get(i).x, fort_smk.POS.get(i).y);
+    }
    
    //test
    if(cheat){
