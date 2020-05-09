@@ -224,7 +224,7 @@ void update(float dt){
   float acceleration = 10;
   
   // Bomber Flight Update
-  if (B.health != 0){ // Plane not destroyed
+  if (B.health > 0){ // Plane not destroyed
     B.vel.set(cos(B.angle*PI/180.0), sin(B.angle*PI/180.0));
     B.vel.mult(B.vel_mtp);
   }
@@ -339,7 +339,7 @@ void update(float dt){
       if (car.type == 1){ // tank
         flm_pos.y = 870;
         flm_pos.x += 10;
-        car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
+        car_flm.add(new ptc_sys(100, 5, flm_pos, new PVector(20, 1),new PVector(0, -1),60));
         flm_pos.y -= 20;
         car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(20, 5),new PVector(0, -5),60));
         
@@ -353,7 +353,7 @@ void update(float dt){
       }
       else{//truck
         flm_pos.y = 850;
-        car_flm.add(new ptc_sys(60, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
+        car_flm.add(new ptc_sys(100, 5, flm_pos, new PVector(30, 2),new PVector(0, -1),60));   
         flm_pos.y -= 20;
         car_smk.add(new ptc_sys(30, 10, flm_pos, new PVector(30, 5),new PVector(0, -5),60));
       }
