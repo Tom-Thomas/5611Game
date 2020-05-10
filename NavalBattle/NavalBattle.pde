@@ -5,7 +5,7 @@ import java.lang.Math;
 
 String projectTitle = "Naval battle";
 
-PImage sky, bomberimg;
+PImage sky, bomberimg, ship1;
 Bomber B;
 Bomb b;
 Float bomb_r=10.0;//bomb_radius
@@ -29,6 +29,7 @@ void setup() {
   noStroke();
   sky = loadImage("../Images/sky_bkg.jpg");
   bomberimg = loadImage("../Images/AVG.png");
+  ship1 = loadImage("../Images/Battleship.png");
   init();
 }
 
@@ -364,6 +365,13 @@ void draw() {
     circle(b.pos.x, b.pos.y, bomb_r);
   }
   
+  // ship
+  pushMatrix();
+  translate(800, 885-h[25]*70);
+  //scale(0.15);
+  imageMode(CENTER);
+  image(ship1, 0, 0);
+  popMatrix();
   
   // plane smoke and spark
   for (int i = 0; i < pln_smk.POS.size(); i++) {
