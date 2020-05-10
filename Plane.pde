@@ -15,6 +15,7 @@ int bomber_direction; //1:fly to right, -1:fly to left
 ArrayList <Car>cars;
 Boolean cheat=false;
 PVector explosion_area;
+float countdown; // countdown before game ends
 
 void setup() {
   size(1600, 900, P2D);
@@ -28,6 +29,7 @@ void setup() {
   tanktbody=loadImage("tanktbody.png");
   tankturrent=loadImage("tankturrent.png");
   background(sky);
+  countdown = 12;
   init();
 }
 
@@ -233,6 +235,13 @@ ArrayList<ptc_sys> car_smk; // car smoke
 void update(float dt){
   float acceleration = 10;
   
+  if (B.health < 0 || (fort.health <= 0)) countdown-=dt;
+  if (countdown <= 0) {
+    countdown = 12;
+    init();
+  }
+    
+  
   // Bomber Flight Update
   if (B.health > 0){ // Plane not destroyed
     B.vel.set(cos(B.angle*PI/180.0), sin(B.angle*PI/180.0));
@@ -256,7 +265,12 @@ void update(float dt){
   
   B.pos.y += (5-B.health)*3/5.0;
     
-  if (B.pos.y >= 880) init();   // Collision Check, Plane Crash & restart
+  if (B.pos.y >= 880 && B.health >= 0) {   // Collision Check, Plane Crash & explode
+      expl_h = new ptc_sys(500, 8, new PVector(B.pos.x,880), new PVector(10,2) // spawn explosion
+        , new PVector(0, -5), 80);
+      expl_h.spawnParticles(dt);
+      B.health = -100;
+  };
 
   if (B.pos.x < -30 || B.pos.x > 1630) {//out of border and turn back
     B.angle = (180-B.angle);
@@ -287,8 +301,12 @@ void update(float dt){
   
   //Smoke Update
   if (B.health < 5){ // Plane emit smoke
-    pln_smk.SetGenRate(10*(5-B.health)+10);
-    pln_smk.Update(dt, true, false, true);
+    if (B.health >= 0)
+    {
+      pln_smk.SetGenRate(10*(5-B.health)+10);
+      pln_smk.Update(dt, true, false, true);      
+    }
+    else pln_smk.Update(dt, false, true, false);
   }
   spark.Update(dt, false, true, false); // spark when plane is hit
   expl_h.Update(dt, false, true, false); // explosion when hit
