@@ -5,9 +5,10 @@ import java.lang.Math;
 
 String projectTitle = "Naval battle";
 
-PImage sky, bomberimg;
+PImage sky, bomberimg, ship1;
 Bomber B;
 Bomb b;
+Ship S;
 Float bomb_r=10.0;//bomb_radius
 int bomber_direction; //1:fly to right, -1:fly to left
 float countdown; // countdown before game ends
@@ -29,6 +30,7 @@ void setup() {
   noStroke();
   sky = loadImage("../Images/sky_bkg.jpg");
   bomberimg = loadImage("../Images/AVG.png");
+  ship1 = loadImage("../Images/Battleship.png");
   init();
 }
 
@@ -36,65 +38,20 @@ void setup() {
 void init(){
   B = new Bomber();
   b = new Bomb(B);
+  S = new Ship(800, 845);
   bomber_direction = 1;
   pln_smk = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   spark = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   expl_m = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);
   expl_h = new ptc_sys(0, 5, B.pos, new PVector(5,5), B.vel, 30);  
+  ship_smk = new ptc_sys(0, 10, new PVector(S.pos.x, 835) , new PVector(50,2), new PVector(0, -5), 60);
   for (int i = 0; i < n; i++){ // initialize sea
     h[i] = 1;
     uh[i] = 0;
     hm[i] = 0;
     uhm[i] = 0;
   }
-  countdown = 12;
-}
-
-
-// Bomber Class
-class Bomber{
-  int health;
-  float vel_mtp; // velocity multiplier
-  PVector vel;
-  float angle; // angle of elevation
-  PVector pos = new PVector(); // position
-  float sens; // sensitivity
-  boolean up;
-  boolean down;
-  boolean cooldown; // cooldown time for bomb
-  
-  public Bomber(){
-    health = 5;
-    vel_mtp = 30;
-    angle = 0;
-    vel = new PVector(cos(angle*PI/180.0), sin(angle*PI/180.0)).mult(vel_mtp);
-    pos.x = 0;
-    pos.y = 450;
-    up = false;
-    down = false;
-    sens = 2.5;
-    cooldown = false;
-  }
-  
-  //make sure angle -180~+180
-  public void angle_check(){
-    if(angle<-180){
-      angle+=360;
-    }
-    if(angle>180){
-      angle-=360;
-    }
-  }
-}
-
-class Bomb{
-  PVector pos = new PVector();
-  PVector vel = new PVector();
-  Bomb(Bomber B){
-    pos = new PVector(B.pos.x, B.pos.y);
-    vel = B.vel.copy();
-    //pos.add(vel);
-  }
+  countdown = 20;
 }
 
 
@@ -127,13 +84,13 @@ void waveEquation(float dt){
 
 void update(float dt){
   
-  if (B.health < 0) countdown-=dt;
+  if (B.health < 0 || S.health <= 0) countdown-=dt;
   if (countdown <= 0) {
-    countdown = 12;
+    countdown = 20;
     init();
   }  
   
-  // Bomber Flight Update
+  // Bomber Update
   if (B.health > 0){ // Plane not destroyed
     B.vel.set(cos(B.angle*PI/180.0), sin(B.angle*PI/180.0));
     B.vel.mult(B.vel_mtp);
@@ -156,13 +113,17 @@ void update(float dt){
   
   B.pos.y += (5-B.health)*3/5.0;
     
-  if (B.pos.y >= 850 && B.health >= 0) {   // Collision Check, Plane Crash & explode
-      expl_h = new ptc_sys(500, 8, new PVector(B.pos.x,850), new PVector(10,2) // spawn explosion
+  if (B.pos.y >= 845 && B.health >= 0) {   // Collision Check, Plane Crash & explode
+      expl_h = new ptc_sys(2000, 8, new PVector(B.pos.x,840), new PVector(10,2) // spawn explosion
         , new PVector(0, -5), 80);
       expl_h.spawnParticles(dt);
-      expl_m = new ptc_sys(2000, 8, new PVector(B.pos.x,850), new PVector(10,2) // spawn explosion
+      float dis = B.pos.x - S.pos.x;
+      if (dis < -1 * S.hlen || dis > S.hlen){ // not hit ship
+        expl_m = new ptc_sys(2000, 8, new PVector(B.pos.x,850), new PVector(10,2) // spawn explosion
         , new PVector(0, -40), 10);
-      expl_m.spawnParticles(dt);
+        expl_m.spawnParticles(dt);
+      }
+      else S.health -= 3;
       uh[(int)(n*B.pos.x/1600)] = 3;
       B.health = -100;
   };
@@ -184,12 +145,22 @@ void update(float dt){
     b.pos.add(PVector.mult(b.vel, dt));
     b.vel.y += (g * dt);
 
-    if (b.pos.y >= 850) {// ground Collision Check
+    if (b.pos.y >= 845) {// ground Collision Check
       B.cooldown = false;
       //b.pos.set(0,0);
-      expl_m = new ptc_sys(2000, 8, new PVector(b.pos.x,850), new PVector(10,2) // spawn explosion
-        , new PVector(0, -40), 10);
-      expl_m.spawnParticles(dt);
+      float dis = b.pos.x - S.pos.x;
+      if (dis > -1 * S.hlen && dis < S.hlen){ // hit
+        expl_h = new ptc_sys(1000, 8, new PVector(b.pos.x,840), new PVector(10,2) // spawn explosion
+          , new PVector(0, -5), 80);
+        expl_h.spawnParticles(dt);
+        S.health -= 1;
+      }
+      else{ // miss
+        expl_m = new ptc_sys(2000, 8, new PVector(b.pos.x,850), new PVector(10,2) // spawn explosion
+          , new PVector(0, -40), 10);
+        expl_m.spawnParticles(dt);        
+      }
+
       int ind = (int)(n*b.pos.x/1600);
       if (ind >= 0 && ind < 50) uh[ind] = 2;
     }
@@ -207,6 +178,17 @@ void update(float dt){
   spark.Update(dt, false, true, false); // spark when plane is hit
   expl_h.Update(dt, false, true, false); // explosion when hit
   expl_m.Update(dt, false, true, true); // explosion when miss  
+  if (S.health < 10){ // Fort emit smoke
+    ship_smk.SetGenRate(30);
+    ship_smk.Update(dt, false, false, false);
+  }
+  
+  //Ship Update
+  if (S.health > 0) S.pos.y = 885-h[25]*70;
+  else { // Sink
+    S.pos.y += 1;
+    ship_smk.SetPos(S.pos);
+  }
   
 }
 
@@ -278,6 +260,7 @@ class ptc_sys{
   // Generate a single particle
   void ParticleGen() {
     PVector p = GenPos(src_pos, src_dim);
+    if (p.y >= 850) return;
     PVector v = GenVel(ini_vel, ptb_angle);
     //PVector c = new PVector(255, 255, 255);
     float life = GenLife(lifespan);
@@ -328,12 +311,18 @@ class ptc_sys{
   void SetGenRate(float x){
     gen_rate = x;
   }
+  
+  void SetPos(PVector v){
+    src_pos = v.copy();
+  }
+  
 }
 
 // ==============================================================================
 
 ptc_sys pln_smk; // plane smoke
 ptc_sys spark; // spark when the plane is hit
+ptc_sys ship_smk; // ship smoke
 ptc_sys expl_m; // explosion missed
 ptc_sys expl_h; // explosion hit
 
@@ -364,6 +353,13 @@ void draw() {
     circle(b.pos.x, b.pos.y, bomb_r);
   }
   
+  // ship
+  pushMatrix();
+  translate(S.pos.x, S.pos.y);
+  //scale(0.15);
+  imageMode(CENTER);
+  image(ship1, 0, 0);
+  popMatrix();
   
   // plane smoke and spark
   for (int i = 0; i < pln_smk.POS.size(); i++) {
@@ -392,9 +388,21 @@ void draw() {
     stroke(225+tmp, 225+tmp, 255, expl_m.LIFE.get(i)*20);
     point(expl_m.POS.get(i).x, expl_m.POS.get(i).y);
   }
-  noStroke();
+  
+  
+  // ship smoke
+  for (int i = 0; i < ship_smk.POS.size(); i++) {
+    float lf = ship_smk.LIFE.get(i);
+    float clr = 25*S.health;
+    strokeWeight(25 - lf);
+    stroke(clr,clr,clr,20);
+    //stroke(200,200,200,80);
+    point(ship_smk.POS.get(i).x, ship_smk.POS.get(i).y);
+  }  
+  
   
   // Sea
+  noStroke();
   fill(100, 100, 255, 70);
   beginShape(QUADS);
   for (int i = 0; i < n-1; i++){
@@ -411,6 +419,88 @@ void draw() {
   String runtimeReport = 
         " FPS: "+ str(round(frameRate)) +"\n";
   surface.setTitle(projectTitle+ "  -  " +runtimeReport);
+}
+
+// ===================== Self-defined Classes =====================
+// Bomber Class
+class Bomber{
+  int health;
+  float vel_mtp; // velocity multiplier
+  PVector vel;
+  float angle; // angle of elevation
+  PVector pos = new PVector(); // position
+  float sens; // sensitivity
+  boolean up;
+  boolean down;
+  boolean cooldown; // cooldown time for bomb
+  
+  public Bomber(){
+    health = 5;
+    vel_mtp = 30;
+    angle = 0;
+    vel = new PVector(cos(angle*PI/180.0), sin(angle*PI/180.0)).mult(vel_mtp);
+    pos.x = 0;
+    pos.y = 450;
+    up = false;
+    down = false;
+    sens = 2.5;
+    cooldown = false;
+  }
+  
+  //make sure angle -180~+180
+  public void angle_check(){
+    if(angle<-180){
+      angle+=360;
+    }
+    if(angle>180){
+      angle-=360;
+    }
+  }
+}
+
+class Bomb{
+  PVector pos = new PVector();
+  PVector vel = new PVector();
+  Bomb(Bomber B){
+    pos = new PVector(B.pos.x, B.pos.y);
+    vel = B.vel.copy();
+    //pos.add(vel);
+  }
+}
+
+// Ship
+class Ship{
+  int health;
+  PVector pos = new PVector(); // position
+  float hlen; // half length
+  int cooldown; // cooldown time for gun
+  ArrayList<Bullet> bullet_list;
+
+  
+  public Ship(float x, float y){
+    health = 10;
+    
+    pos.x = x;
+    pos.y = y;
+    hlen = 100;
+    cooldown = 0;
+    bullet_list=new ArrayList<Bullet>();
+  }
+  
+}
+
+class Bullet{
+   PVector pos = new PVector();
+   float angle;
+   
+   public Bullet(float x,float y,float angle1){
+     pos.x=x;
+     pos.y=y;
+     angle=angle1;
+     pos.x += 80*sin(angle*PI/180.0);
+     pos.y -= (80*cos(angle*PI/180.0)+20);
+   }
+   
 }
 
 void keyPressed() {
