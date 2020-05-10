@@ -3,9 +3,10 @@
 // for the final project of CSCI 5611
 
 import java.lang.Math;
+import ddf.minim.*;
 
 String projectTitle = "Field Battle";
-PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent;
+PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent,tpt;
 Bomber B;
 Bomb b;
 Fort fort;
@@ -16,9 +17,13 @@ ArrayList <Car>cars;
 Boolean cheat=false;
 PVector explosion_area;
 float countdown; // countdown before game ends
+Minim minim=new Minim(this);
+AudioPlayer player;
+
 
 void setup() {
   size(1600, 900, P2D);
+  player = minim.loadFile("bomb.wav");
   noStroke();
   sky = loadImage("../Images/Sky.jpg");
   bomberimg = loadImage("../Images/AVG.png");
@@ -28,6 +33,7 @@ void setup() {
   truck = loadImage("../Images/truck.png");
   tanktbody=loadImage("../Images/tanktbody.png");
   tankturrent=loadImage("../Images/tankturrent.png");
+  tpt=loadImage("../Images/tpt1.png");
   background(sky);
   init();
 }
@@ -238,6 +244,8 @@ void update(float dt){
   if (B.health < 0 || (fort.health <= 0)) countdown-=dt;
   if (countdown <= 0) {
     countdown = 12;
+    player = minim.loadFile("over.wav");
+    player.play();
     init();
   }
     
@@ -288,9 +296,11 @@ void update(float dt){
   if (B.cooldown) { // bomb dropped
     b.pos.add(PVector.mult(b.vel, dt));
     b.vel.y += (acceleration * dt);
-
+    
     if (b.pos.y >= 880) {// ground Collision Check
       B.cooldown = false;
+      player = minim.loadFile("hit.wav");
+      player.play(); 
       //b.pos.set(0,0);
       expl_m = new ptc_sys(1000, 8, new PVector(b.pos.x,880), new PVector(10,2) // spawn explosion
         , new PVector(0, -5), 80);
@@ -336,6 +346,8 @@ void update(float dt){
   }
   if(fort.health>0&&B.cooldown&&b.pos.y>850&&dis(b.pos,fort.pos)<40.0){//bomb hit fort 
     fort.health--;
+    player = minim.loadFile("hit.wav");
+    player.play(); 
     B.cooldown = false;
     explosion_area.set(b.pos.x,b.pos.y);
     //b.pos.set(0,0);
@@ -373,6 +385,8 @@ void update(float dt){
      
       if(dis(bullet.pos,B.pos)<30.0){//bullet hit bomber 
         B.health--;
+        player = minim.loadFile("hit.wav");
+        player.play();
         spark = new ptc_sys(500, 2, bullet.pos, new PVector(2,2) // spawn spark
         , new PVector(0, -5), 180);
         spark.spawnParticles(dt);
@@ -394,6 +408,8 @@ void update(float dt){
       in_explosion_area=true;
     }
     if(car.alive&&(in_explosion_area|| b.pos.y>850&&(B.cooldown&&dis(b.pos,car.pos)<(car.type==1?50:60)))){//bomb hit car
+      player = minim.loadFile("hit.wav");
+      player.play(); 
       car.alive=false;
       println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
       B.cooldown = false;
@@ -616,9 +632,20 @@ void drawScene(){
   
   //bomb
   if (B.cooldown) {
-    noStroke();
+    /*noStroke();
     fill(0, 0, 0);
     circle(b.pos.x, b.pos.y, bomb_r);
+    */
+    pushMatrix();
+    translate(b.pos.x, b.pos.y);
+    if(b.vel.x>0){
+      rotate(45*PI/180.0);
+    }else{
+      rotate(-135*PI/180.0);
+    }
+    imageMode(CENTER);
+    image(tpt, 0, 0,25,25);
+    popMatrix();
   }
   
   
@@ -797,6 +824,8 @@ void keyPressed()
   if (keyCode ==   ' ' && B.cooldown == false){ // drop bomb
     B.cooldown = true;
     b = new Bomb(B);
+    player = minim.loadFile("bomb.wav");
+    player.play(); 
   }
   
   if (keyCode == ESC  ) exit();
@@ -822,6 +851,8 @@ void keyPressed()
     if(keyCode == ENTER && fort.cooldown<=0){
       fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
       fort.cooldown+=30;
+      player=minim.loadFile("shot3.wav");
+      player.play();
     }
   }
 
