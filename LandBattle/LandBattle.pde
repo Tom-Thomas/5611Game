@@ -4,7 +4,7 @@
 
 import java.lang.Math;
 
-String projectTitle = "Bomber";
+String projectTitle = "Field Battle";
 PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent;
 Bomber B;
 Bomb b;
@@ -20,16 +20,15 @@ float countdown; // countdown before game ends
 void setup() {
   size(1600, 900, P2D);
   noStroke();
-  sky = loadImage("Sky.jpg");
-  bomberimg = loadImage("AVG.png");
-  gun = loadImage("gunbarrel.png");
-  gunbase = loadImage("gunbase.png");
-  tank = loadImage("tank.png");
-  truck = loadImage("truck.png");
-  tanktbody=loadImage("tanktbody.png");
-  tankturrent=loadImage("tankturrent.png");
+  sky = loadImage("../Images/Sky.jpg");
+  bomberimg = loadImage("../Images/AVG.png");
+  gun = loadImage("../Images/gunbarrel.png");
+  gunbase = loadImage("../Images/gunbase.png");
+  tank = loadImage("../Images/tank.png");
+  truck = loadImage("../Images/truck.png");
+  tanktbody=loadImage("../Images/tanktbody.png");
+  tankturrent=loadImage("../Images/tankturrent.png");
   background(sky);
-  countdown = 12;
   init();
 }
 
@@ -55,6 +54,7 @@ void init() {
   cars.add(new Car(2,1510,870,-5));
   cars.add(new Car(1,1670,870,-5));
   bomber_direction = 1;
+  countdown = 12;
 }
 
 class Bomber{
