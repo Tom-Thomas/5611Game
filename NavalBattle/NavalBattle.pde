@@ -5,13 +5,15 @@ import java.lang.Math;
 
 String projectTitle = "Naval battle";
 
-PImage sky, bomberimg, ship1;
+PImage sky, bomberimg, ship1, bullet_img;
 Bomber B;
 Bomb b;
 Ship S;
 Float bomb_r=10.0;//bomb_radius
 int bomber_direction; //1:fly to right, -1:fly to left
 float countdown; // countdown before game ends
+
+Float bullet_v=100.0; //bullet velocity
 
 float g = 10;
 
@@ -31,6 +33,7 @@ void setup() {
   sky = loadImage("../Images/sky_bkg.jpg");
   bomberimg = loadImage("../Images/AVG.png");
   ship1 = loadImage("../Images/Battleship.png");
+  bullet_img=loadImage("../Images/bullet.png");
   init();
 }
 
@@ -113,7 +116,7 @@ void update(float dt){
   
   B.pos.y += (5-B.health)*3/5.0;
     
-  if (B.pos.y >= 845 && B.health >= 0) {   // Collision Check, Plane Crash & explode
+  if (B.pos.y >= 845 && B.health >= -10) {   // Collision Check, Plane Crash & explode
       expl_h = new ptc_sys(2000, 8, new PVector(B.pos.x,840), new PVector(10,2) // spawn explosion
         , new PVector(0, -5), 80);
       expl_h.spawnParticles(dt);
@@ -124,7 +127,7 @@ void update(float dt){
         expl_m.spawnParticles(dt);
       }
       else S.health -= 3;
-      uh[(int)(n*B.pos.x/1600)] = 3;
+      if (B.pos.x >= 0 && B.pos.x <= 1600) uh[(int)(n*B.pos.x/1600)] = 3;
       B.health = -100;
   };
 
@@ -171,7 +174,7 @@ void update(float dt){
     if (B.health >= 0)
     {
       pln_smk.SetGenRate(10*(5-B.health)+10);
-      pln_smk.Update(dt, true, false, true);      
+      pln_smk.Update(dt, true, false, false);      
     }
     else pln_smk.Update(dt, false, true, false);
   }
@@ -184,12 +187,53 @@ void update(float dt){
   }
   
   //Ship Update
-  if (S.health > 0) S.pos.y = 885-h[25]*70;
+  if (S.health > 0) {
+    S.pos.y = 885-h[25]*70;
+    if(S.cooldown <= 0){ // Open Fire
+      float theta = autoaim();
+      println(theta);
+      S.bullet_list.add(new Bullet(S.pos.x, S.pos.y, theta));
+      S.cooldown = 15;
+    }    
+  }
   else { // Sink
     S.pos.y += 1;
     ship_smk.SetPos(S.pos);
   }
+  S.cooldown -= dt;
   
+
+  
+  //Bullet Update
+  for(int i=S.bullet_list.size()-1;i>=0;i--){
+     Bullet bullet=S.bullet_list.get(i);
+     bullet.pos.x+=bullet_v*dt*sin(bullet.angle*PI/180.0);
+     bullet.pos.y-=bullet_v*dt*cos(bullet.angle*PI/180.0);
+     if(bullet.pos.x<0||bullet.pos.x>1600||bullet.pos.y<0){
+       S.bullet_list.remove(i);
+       continue;
+     }
+     PVector bullet_head=new PVector(bullet.pos.x+40*sin(bullet.angle*PI/180.0),bullet.pos.y-40*cos(bullet.angle*PI/180.0));
+     PVector bullet_tail=new PVector(bullet.pos.x-40*sin(bullet.angle*PI/180.0),bullet.pos.y+40*cos(bullet.angle*PI/180.0));
+     //test
+     //fill(0,255,0);
+     //circle(bullet_head.x,bullet_head.y,15);
+     //circle(bullet_tail.x,bullet_tail.y,15);
+     
+     if(dis(bullet_head,B.pos)<30.0||dis(bullet_tail,B.pos)<30.0){//bullet hit bomber 
+        B.health--;
+        PVector tmp = B.pos.copy();
+        spark = new ptc_sys(500, 2, tmp, new PVector(2,2) // spawn spark
+        , new PVector(0, -5), 180);
+        spark.spawnParticles(dt);
+        S.bullet_list.remove(i);
+        continue;
+      }
+      
+      
+  }
+
+
 }
 
 
@@ -336,7 +380,7 @@ void draw() {
   update(0.15);
   
   
-    // bomber
+  // bomber
   fill(255, 0, 0);
   pushMatrix();
   translate(B.pos.x, B.pos.y);
@@ -360,6 +404,20 @@ void draw() {
   imageMode(CENTER);
   image(ship1, 0, 0);
   popMatrix();
+  
+   //bullet
+   for(int i=S.bullet_list.size()-1;i>=0;i--){
+     Bullet bullet=S.bullet_list.get(i);
+     //fill(0, 0, 0);
+     //circle(bullet.pos.x, bullet.pos.y, bomb_r);
+    pushMatrix();
+    translate(bullet.pos.x, bullet.pos.y);
+    rotate(bullet.angle*PI/180);
+    scale(0.8);
+    imageMode(CENTER);
+    image(bullet_img, 0, 0,50/2,83/2);
+    popMatrix();
+   }  
   
   // plane smoke and spark
   for (int i = 0; i < pln_smk.POS.size(); i++) {
@@ -421,6 +479,39 @@ void draw() {
   surface.setTitle(projectTitle+ "  -  " +runtimeReport);
 }
 
+float autoaim(){
+
+  float theta1;
+  float theta2;
+  
+  float tmp1 = S.pos.x - B.pos.x;
+  float tmp2 = S.pos.y - B.pos.y;
+  if (tmp2 == 0){
+    if (tmp1 < 0) return 90;
+    else return -90;
+  }
+  float c1 = tmp1/tmp2;
+  float c2 = (c1*B.vel.y - B.vel.x)/bullet_v;
+  float a = 1 + c1*c1;
+  float b = 2*c2;
+  float c = c2*c2 - c1*c1;
+  
+  float det1 = (-1*b+sqrt(b*b-4*a*c))/(2*a);
+  float det2 = (-1*b-sqrt(b*b-4*a*c))/(2*a);
+  
+  println("costheta = ",det2);
+  theta1 = acos(det1);
+  theta2 = acos(det2);
+  theta1 = theta1 * 180 / PI;
+  theta1 = 180 - theta1;
+  theta1 -= 90;
+  theta2 = theta2 * 180 / PI;
+  theta2 = 180 - theta2;
+  theta2 -= 90;
+  if ((B.pos.x - S.pos.x)*(theta1) > 0) return theta1;
+  return theta2;
+}
+
 // ===================== Self-defined Classes =====================
 // Bomber Class
 class Bomber{
@@ -473,7 +564,7 @@ class Ship{
   int health;
   PVector pos = new PVector(); // position
   float hlen; // half length
-  int cooldown; // cooldown time for gun
+  float cooldown; // cooldown time for gun
   ArrayList<Bullet> bullet_list;
 
   
@@ -483,7 +574,7 @@ class Ship{
     pos.x = x;
     pos.y = y;
     hlen = 100;
-    cooldown = 0;
+    cooldown = 8;
     bullet_list=new ArrayList<Bullet>();
   }
   
@@ -497,8 +588,8 @@ class Bullet{
      pos.x=x;
      pos.y=y;
      angle=angle1;
-     pos.x += 80*sin(angle*PI/180.0);
-     pos.y -= (80*cos(angle*PI/180.0)+20);
+     //pos.x += 80*sin(angle*PI/180.0);
+     //pos.y -= (80*cos(angle*PI/180.0)+20);
    }
    
 }
@@ -522,4 +613,9 @@ void keyPressed() {
 void keyReleased(){
   if (keyCode == 'W') B.up = false;
   else if (keyCode == 'S') B.down = false;
+}
+
+//distance
+float dis(PVector p1, PVector p2){
+  return sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
 }
