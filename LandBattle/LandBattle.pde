@@ -6,7 +6,7 @@ import java.lang.Math;
 import ddf.minim.*;
 
 String projectTitle = "Field Battle";
-PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent,tpt;
+PImage sky, bomberimg, gun, gunbase, tank, truck, tanktbody, tankturrent,tpt,bullet_img;
 Bomber B;
 Bomb b;
 Fort fort;
@@ -23,7 +23,7 @@ AudioPlayer player;
 
 void setup() {
   size(1600, 900, P2D);
-  player = minim.loadFile("bomb.wav");
+  player = minim.loadFile("../Sound/bomb.wav");
   noStroke();
   sky = loadImage("../Images/Sky.jpg");
   bomberimg = loadImage("../Images/AVG.png");
@@ -34,6 +34,7 @@ void setup() {
   tanktbody=loadImage("../Images/tanktbody.png");
   tankturrent=loadImage("../Images/tankturrent.png");
   tpt=loadImage("../Images/tpt1.png");
+  bullet_img=loadImage("../Images/bullet.png");
   background(sky);
   init();
 }
@@ -244,7 +245,7 @@ void update(float dt){
   if (B.health < 0 || (fort.health <= 0)) countdown-=dt;
   if (countdown <= 0) {
     countdown = 12;
-    player = minim.loadFile("over.wav");
+    player = minim.loadFile("../Sound/over.wav");
     player.play();
     init();
   }
@@ -299,7 +300,7 @@ void update(float dt){
     
     if (b.pos.y >= 880) {// ground Collision Check
       B.cooldown = false;
-      player = minim.loadFile("hit.wav");
+      player = minim.loadFile("../Sound/hit.wav");
       player.play(); 
       //b.pos.set(0,0);
       expl_m = new ptc_sys(1000, 8, new PVector(b.pos.x,880), new PVector(10,2) // spawn explosion
@@ -346,7 +347,7 @@ void update(float dt){
   }
   if(fort.health>0&&B.cooldown&&b.pos.y>850&&dis(b.pos,fort.pos)<40.0){//bomb hit fort 
     fort.health--;
-    player = minim.loadFile("hit.wav");
+    player = minim.loadFile("../Sound/hit.wav");
     player.play(); 
     B.cooldown = false;
     explosion_area.set(b.pos.x,b.pos.y);
@@ -382,10 +383,16 @@ void update(float dt){
        fort.bullet_list.remove(i);
        continue;
      }
+     PVector bullet_head=new PVector(bullet.pos.x+40*sin(bullet.angle*PI/180.0),bullet.pos.y-40*cos(bullet.angle*PI/180.0));
+     PVector bullet_tail=new PVector(bullet.pos.x-40*sin(bullet.angle*PI/180.0),bullet.pos.y+40*cos(bullet.angle*PI/180.0));
+     //test
+     fill(0,255,0);
+     circle(bullet_head.x,bullet_head.y,15);
+     circle(bullet_tail.x,bullet_tail.y,15);
      
-      if(dis(bullet.pos,B.pos)<30.0){//bullet hit bomber 
+      if(dis(bullet_head,B.pos)<30.0||dis(bullet_tail,B.pos)<30.0){//bullet hit bomber 
         B.health--;
-        player = minim.loadFile("hit.wav");
+        player = minim.loadFile("../Sound/hit.wav");
         player.play();
         spark = new ptc_sys(500, 2, bullet.pos, new PVector(2,2) // spawn spark
         , new PVector(0, -5), 180);
@@ -408,7 +415,7 @@ void update(float dt){
       in_explosion_area=true;
     }
     if(car.alive&&(in_explosion_area|| b.pos.y>850&&(B.cooldown&&dis(b.pos,car.pos)<(car.type==1?50:60)))){//bomb hit car
-      player = minim.loadFile("hit.wav");
+      player = minim.loadFile("../Sound/hit.wav");
       player.play(); 
       car.alive=false;
       println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
@@ -684,8 +691,14 @@ void drawScene(){
    //bullet
    for(int i=fort.bullet_list.size()-1;i>=0;i--){
      Bullet bullet=fort.bullet_list.get(i);
-     fill(0, 0, 0);
-     circle(bullet.pos.x, bullet.pos.y, bomb_r);
+     //fill(0, 0, 0);
+     //circle(bullet.pos.x, bullet.pos.y, bomb_r);
+    pushMatrix();
+    translate(bullet.pos.x, bullet.pos.y);
+    rotate(bullet.angle*PI/180);
+    imageMode(CENTER);
+    image(bullet_img, 0, 0,50/2,83/2);
+    popMatrix();
    }
   
   // cars
@@ -824,7 +837,7 @@ void keyPressed()
   if (keyCode ==   ' ' && B.cooldown == false){ // drop bomb
     B.cooldown = true;
     b = new Bomb(B);
-    player = minim.loadFile("bomb.wav");
+    player = minim.loadFile("../Sound/bomb.wav");
     player.play(); 
   }
   
@@ -851,7 +864,7 @@ void keyPressed()
     if(keyCode == ENTER && fort.cooldown<=0){
       fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
       fort.cooldown+=30;
-      player=minim.loadFile("shot3.wav");
+      player=minim.loadFile("../Sound/shot3.wav");
       player.play();
     }
   }
