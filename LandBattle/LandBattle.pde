@@ -394,7 +394,8 @@ void update(float dt){
         B.health--;
         player = minim.loadFile("../Sound/hit.wav");
         player.play();
-        spark = new ptc_sys(500, 2, bullet.pos, new PVector(2,2) // spawn spark
+        PVector tmp = bullet.pos.copy();
+        spark = new ptc_sys(500, 2, tmp, new PVector(2,2) // spawn spark
         , new PVector(0, -5), 180);
         spark.spawnParticles(dt);
         fort.bullet_list.remove(i);
@@ -696,6 +697,7 @@ void drawScene(){
     pushMatrix();
     translate(bullet.pos.x, bullet.pos.y);
     rotate(bullet.angle*PI/180);
+    scale(0.8);
     imageMode(CENTER);
     image(bullet_img, 0, 0,50/2,83/2);
     popMatrix();
