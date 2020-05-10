@@ -278,6 +278,8 @@ void update(float dt){
       expl_h = new ptc_sys(500, 8, new PVector(B.pos.x,880), new PVector(10,2) // spawn explosion
         , new PVector(0, -5), 80);
       expl_h.spawnParticles(dt);
+      player = minim.loadFile("../Sound/hit.wav");
+      player.play();       
       B.health = -100;
   };
 
@@ -394,7 +396,7 @@ void update(float dt){
         B.health--;
         player = minim.loadFile("../Sound/hit.wav");
         player.play();
-        PVector tmp = bullet.pos.copy();
+        PVector tmp = B.pos.copy();
         spark = new ptc_sys(500, 2, tmp, new PVector(2,2) // spawn spark
         , new PVector(0, -5), 180);
         spark.spawnParticles(dt);
