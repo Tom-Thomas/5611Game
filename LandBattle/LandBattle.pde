@@ -720,12 +720,12 @@ void drawScene(){
         popMatrix();
         
         //test ends
-        
+        /*
         fill(255, 0, 0);
         circle(fort.g_pos.x-(fort.g_center-(-1.5))*50*cos((fort.angle+90)*PI/180), fort.g_pos.y-(fort.g_center-(-1.5))*50*sin((fort.angle+90)*PI/180),5);
         fill(0, 255, 255);
         circle(fort.g_pos.x+(0.5-fort.g_center)*50*cos((fort.angle+90)*PI/180), fort.g_pos.y+(0.5-fort.g_center)*50*sin((fort.angle+90)*PI/180),5);
-        
+        */
    } 
    
    fill(0, 0, 100);
