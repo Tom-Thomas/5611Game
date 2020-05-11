@@ -17,7 +17,7 @@ Float bullet_v=100.0; //bullet velocity
 
 float g = 10;
 
-int n = 50;
+int n = 100;
 float dx = 0.1;
 float[] h = new float[n];
 float[] uh = new float[n];
@@ -165,7 +165,7 @@ void update(float dt){
       }
 
       int ind = (int)(n*b.pos.x/1600);
-      if (ind >= 0 && ind < 50) uh[ind] = 2;
+      if (ind >= 0 && ind < 100) uh[ind] = 2;
     }
   }  
   
