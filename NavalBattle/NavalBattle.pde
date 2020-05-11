@@ -131,7 +131,7 @@ void update(float dt){
         expl_m = new ptc_sys(2000, 8, new PVector(B.pos.x,850), new PVector(10,2) // spawn explosion
         , new PVector(0, -40), 10);
         expl_m.spawnParticles(dt);
-        player = minim.loadFile("../Sound/hit.wav");
+        player = minim.loadFile("../Sound/water.wav");
         player.play();         
       }
       else {
@@ -162,8 +162,8 @@ void update(float dt){
 
     if (b.pos.y >= 845) {// ground Collision Check
       B.cooldown = false;
-      player = minim.loadFile("../Sound/hit.wav");
-      player.play();      
+      //player = minim.loadFile("../Sound/water.wav");
+      //player.play();      
       //b.pos.set(0,0);
       float dis = b.pos.x - S.pos.x;
       if (dis > -1 * S.hlen && dis < S.hlen){ // hit
@@ -172,13 +172,13 @@ void update(float dt){
         expl_h.spawnParticles(dt);
         S.health -= 1;
         player = minim.loadFile("../Sound/hit.wav");
-        player.play();        
+        player.play();   
       }
       else{ // miss
         expl_m = new ptc_sys(2000, 8, new PVector(b.pos.x,850), new PVector(10,2) // spawn explosion
           , new PVector(0, -40), 10);
         expl_m.spawnParticles(dt);     
-        player = minim.loadFile("../Sound/hit.wav");
+        player = minim.loadFile("../Sound/water.wav");
         player.play();        
       }
 
