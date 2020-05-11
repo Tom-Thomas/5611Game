@@ -2,16 +2,19 @@
 // Written by Yuxuan Huang and Jiajun Tang
 // for CSCI 5611 Final Project
 import java.lang.Math;
+import ddf.minim.*;
 
 String projectTitle = "Naval battle";
 
-PImage sky, bomberimg, ship1, bullet_img;
+PImage sky, bomberimg, ship1, tpt, bullet_img;
 Bomber B;
 Bomb b;
 Ship S;
 Float bomb_r=10.0;//bomb_radius
 int bomber_direction; //1:fly to right, -1:fly to left
 float countdown; // countdown before game ends
+Minim minim=new Minim(this);
+AudioPlayer player;
 
 Float bullet_v=100.0; //bullet velocity
 
@@ -29,10 +32,12 @@ float[] uhm = new float[n];
 // Create Window
 void setup() {
   size(1600, 900, P2D);
+  player = minim.loadFile("../Sound/bomb.wav");
   noStroke();
   sky = loadImage("../Images/sky_bkg.jpg");
   bomberimg = loadImage("../Images/AVG.png");
   ship1 = loadImage("../Images/Battleship.png");
+  tpt=loadImage("../Images/tpt1.png");
   bullet_img=loadImage("../Images/bullet.png");
   init();
 }
@@ -120,13 +125,20 @@ void update(float dt){
       expl_h = new ptc_sys(2000, 8, new PVector(B.pos.x,840), new PVector(10,2) // spawn explosion
         , new PVector(0, -5), 80);
       expl_h.spawnParticles(dt);
+      
       float dis = B.pos.x - S.pos.x;
       if (dis < -1 * S.hlen || dis > S.hlen){ // not hit ship
         expl_m = new ptc_sys(2000, 8, new PVector(B.pos.x,850), new PVector(10,2) // spawn explosion
         , new PVector(0, -40), 10);
         expl_m.spawnParticles(dt);
+        player = minim.loadFile("../Sound/hit.wav");
+        player.play();         
       }
-      else S.health -= 3;
+      else {
+        S.health -= 3;
+        player = minim.loadFile("../Sound/hit.wav");
+        player.play();        
+      }
       if (B.pos.x >= 0 && B.pos.x <= 1600) uh[(int)(n*B.pos.x/1600)] = 3;
       B.health = -100;
   };
@@ -150,6 +162,8 @@ void update(float dt){
 
     if (b.pos.y >= 845) {// ground Collision Check
       B.cooldown = false;
+      player = minim.loadFile("../Sound/hit.wav");
+      player.play();      
       //b.pos.set(0,0);
       float dis = b.pos.x - S.pos.x;
       if (dis > -1 * S.hlen && dis < S.hlen){ // hit
@@ -157,11 +171,15 @@ void update(float dt){
           , new PVector(0, -5), 80);
         expl_h.spawnParticles(dt);
         S.health -= 1;
+        player = minim.loadFile("../Sound/hit.wav");
+        player.play();        
       }
       else{ // miss
         expl_m = new ptc_sys(2000, 8, new PVector(b.pos.x,850), new PVector(10,2) // spawn explosion
           , new PVector(0, -40), 10);
-        expl_m.spawnParticles(dt);        
+        expl_m.spawnParticles(dt);     
+        player = minim.loadFile("../Sound/hit.wav");
+        player.play();        
       }
 
       int ind = (int)(n*b.pos.x/1600);
@@ -189,11 +207,13 @@ void update(float dt){
   //Ship Update
   if (S.health > 0) {
     S.pos.y = 885-h[25]*70;
-    if(S.cooldown <= 0){ // Open Fire
+    if(S.cooldown <= 0 && B.health > 0){ // Open Fire
       float theta = autoaim();
-      println(theta);
+      //println(theta);
       S.bullet_list.add(new Bullet(S.pos.x, S.pos.y, theta));
       S.cooldown = 15;
+      player=minim.loadFile("../Sound/shot3.wav");
+      player.play();
     }    
   }
   else { // Sink
@@ -227,6 +247,8 @@ void update(float dt){
         , new PVector(0, -5), 180);
         spark.spawnParticles(dt);
         S.bullet_list.remove(i);
+        player = minim.loadFile("../Sound/hit.wav");
+        player.play(); 
         continue;
       }
       
@@ -393,8 +415,16 @@ void draw() {
   //bomb
   if (B.cooldown) {
     noStroke();
-    fill(0, 0, 0);
-    circle(b.pos.x, b.pos.y, bomb_r);
+    pushMatrix();
+    translate(b.pos.x, b.pos.y);
+    if(b.vel.x>0){
+      rotate(45*PI/180.0);
+    }else{
+      rotate(-135*PI/180.0);
+    }
+    imageMode(CENTER);
+    image(tpt, 0, 0,25,25);
+    popMatrix();
   }
   
   // ship
@@ -499,7 +529,7 @@ float autoaim(){
   float det1 = (-1*b+sqrt(b*b-4*a*c))/(2*a);
   float det2 = (-1*b-sqrt(b*b-4*a*c))/(2*a);
   
-  println("costheta = ",det2);
+  //println("costheta = ",det2);
   theta1 = acos(det1);
   theta2 = acos(det2);
   theta1 = theta1 * 180 / PI;
@@ -605,6 +635,8 @@ void keyPressed() {
   if (keyCode ==   ' ' && B.cooldown == false){ // drop bomb
     B.cooldown = true;
     b = new Bomb(B);
+    player = minim.loadFile("../Sound/bomb.wav");
+    player.play();
   }
   
   if (keyCode == ESC) exit();
