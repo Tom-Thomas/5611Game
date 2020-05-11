@@ -131,6 +131,8 @@ void update(float dt){
         expl_m = new ptc_sys(2000, 8, new PVector(B.pos.x,850), new PVector(10,2) // spawn explosion
         , new PVector(0, -40), 10);
         expl_m.spawnParticles(dt);
+        player = minim.loadFile("../Sound/hit.wav");
+        player.play();
         player = minim.loadFile("../Sound/water.wav");
         player.play();         
       }
@@ -207,7 +209,7 @@ void update(float dt){
   
   //Ship Update
   if (S.health > 0) {
-    S.pos.y = 885-h[25]*70;
+    S.pos.y = 885 - h[50]*70;
     if(S.cooldown <= 0 && B.health > 0){ // Open Fire
       float theta = autoaim();
       //println(theta);
@@ -511,7 +513,7 @@ void draw() {
 }
 
 float autoaim(){
-
+  float theta;
   float theta1;
   float theta2;
   
@@ -539,8 +541,11 @@ float autoaim(){
   theta2 = theta2 * 180 / PI;
   theta2 = 180 - theta2;
   theta2 -= 90;
-  if ((B.pos.x - S.pos.x)*(theta1) > 0) return theta1;
-  return theta2;
+  if ((B.pos.x - S.pos.x)*(theta1) > 0) theta = theta1;
+  else theta = theta2;
+  float tmp = ((float)Math.random()-0.5)*20;
+  theta += tmp;
+  return theta;
 }
 
 // ===================== Self-defined Classes =====================
