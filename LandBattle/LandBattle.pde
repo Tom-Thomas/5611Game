@@ -421,7 +421,7 @@ void update(float dt){
       player = minim.loadFile("../Sound/hit.wav");
       player.play(); 
       car.alive=false;
-      println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
+      //println("car is hitted"+b.vel.x*0.15+"  "+b.vel.y*(-1)*0.2);//hit turrent
       B.cooldown = false;
       //b.pos.set(0,0);
       
@@ -625,7 +625,7 @@ void update(float dt){
 
 void drawScene(){
   
-  println(round(frameRate));
+  //println(round(frameRate));
   
   // sky
   background(sky);
@@ -868,7 +868,7 @@ void keyPressed()
     if(keyCode == ENTER && fort.cooldown<=0){
       fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
       fort.cooldown+=30;
-      player=minim.loadFile("../Sound/shot3.wav");
+      player=minim.loadFile("../Sound/shot.wav");
       player.play();
     }
   }
