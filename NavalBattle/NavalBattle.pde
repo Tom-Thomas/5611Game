@@ -212,7 +212,7 @@ void update(float dt){
       //println(theta);
       S.bullet_list.add(new Bullet(S.pos.x, S.pos.y, theta));
       S.cooldown = 15;
-      player=minim.loadFile("../Sound/shot3.wav");
+      player=minim.loadFile("../Sound/shot.wav");
       player.play();
     }    
   }
