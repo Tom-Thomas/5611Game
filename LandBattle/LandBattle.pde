@@ -868,7 +868,7 @@ void keyPressed()
     if(keyCode == ENTER && fort.cooldown<=0){
       fort.bullet_list.add(new Bullet(fort.pos.x,fort.pos.y,fort.angle));
       fort.cooldown+=30;
-      player=minim.loadFile("../Sound/shot3.wav");
+      player=minim.loadFile("../Sound/shot.wav");
       player.play();
     }
   }
